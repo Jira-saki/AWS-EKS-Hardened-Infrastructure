@@ -1,0 +1,141 @@
+![CI/CD](https://img.shields.io/github/actions/workflow/status/Jira-saki/aws-eks-hardened-modernization/ci.yml?label=CI%2FCD&logo=githubactions) ![Terraform](https://img.shields.io/badge/Terraform-1.x-7B42BC?logo=terraform) ![AWS EKS](https://img.shields.io/badge/AWS-EKS-FF9900?logo=amazonaws)
+
+# AWS EKS Hardened Modernization & Security Platform (EP2)
+
+## Summary
+
+This repo demonstrates the design and prototyping of a hardened AWS EKS modernization platform for migrating 14 legacy sites from insecure shared hosting to immutable infrastructure.
+
+- Architecture built for security, isolation, and operational visibility
+- Local first: validated tooling and hardening in a private KVM/QEMU lab ("Hobgoblin") before cloud rollout
+- Cloud ready: AWS EKS with Bottlerocket nodes, IRSA, strict VPC segmentation, and SIEM-style observability
+
+## What this demonstrates
+
+- End-to-end infrastructure design and implementation with Terraform
+- Host hardening and secure local prototyping before production deployment
+- Deployable security controls for legacy web workloads on AWS
+- Observability and threat detection integration for operational readiness
+
+## Role
+
+Lead architect and implementer: defined the hybrid local/cloud workflow, built Terraform prototypes, and validated host-level hardening prior to AWS deployment.
+
+## Background
+
+This platform responds to EP1, a compromise of legacy domains on shared hosting caused by poor isolation and unmonitored lateral movement.
+
+- Previous issues: manual SSH access, shared kernels, weak tenant separation
+- EP2 objective: eliminate shared trust boundaries and enforce immutable, least-privilege infrastructure
+
+## Project Structure
+
+```text
+📂 ep2-infra
+├── main.tf              # Root Terraform configuration
+├── variables.tf         # Input variables
+├── outputs.tf           # Exposed outputs
+├── provider.tf          # Provider configuration
+├── terraform.tfstate    # Local state file
+├── assets/              # Architecture diagrams and supporting files
+└── modules/
+    ├── vpc/             # Network topology and endpoints
+    ├── eks/             # Cluster and node group configuration
+    ├── security/        # WAF, GuardDuty, Security Hub, IAM policies
+    └── logging/         # CloudWatch / OpenSearch observability
+```
+
+## Hybrid Development Strategy
+
+This project follows a hybrid process that validates security design and hardening in my "Hobgoblin Host" (Thinkpad L15 i7 64GB) before cloud deployment.
+
+- Sandbox: Hobgoblin private KVM/QEMU environment for local prototyping and security validation
+- Purpose: prototype OS hardening and SSH baselines before codifying them into AWS Bottlerocket configurations
+- Outcome: reduce cloud deployment risk and demonstrate hands-on home lab capability
+
+## Architecture Overview
+
+![AWS SCS Diagram](assets/AWS-SCS.png)
+
+This project is built in two phases:
+
+1. Local prototyping with **Terraform + Libvirt** on a private KVM/QEMU host
+2. Production deployment on **AWS EKS** with hardened Bottlerocket node groups
+
+The design emphasizes:
+
+- Immutable compute and minimal host attack surface
+- Least-privilege identity using IRSA
+- Strict network segmentation with VPC endpoints and ALB/WAF protection
+- Centralized logging and SIEM-ready analysis
+
+## Local Sandbox (Hobgoblin Lab)
+
+Phase 1 validates host hardening and IaC patterns before cloud rollout.
+
+- Host: Private Ubuntu-based KVM/QEMU server
+- Purpose: simulate hardened infrastructure without cloud cost
+- Tools: Terraform, Libvirt, cloud-init
+
+### Current progress
+
+| Feature | Status | Notes |
+|---|:---:|---|
+| IaC provisioning | ✅ | Automated VM creation with Terraform + Libvirt |
+| SSH hardening | ✅ | Key-only auth, disabled root login, CIS-aligned access policies |
+| Environment isolation | ✅ | Dedicated storage pools and private Libvirt networks |
+| Cloud-init automation | 🚧 | Converting manual hardening into automated boot configuration |
+
+## Core Hardening Strategy
+
+### Host-level security
+
+- Use **Bottlerocket OS** for EKS nodes
+- Minimal runtime footprint, read-only root filesystem, no SSH access
+- Node configuration managed via EKS and user data
+- Initial OS hardening and SSH security baselines were prototyped and validated in a bare-metal KVM environment (Hobgoblin) before being codified into AWS Bottlerocket configurations.
+
+### Manual Hardening Logs
+
+Initial hardening steps were documented in the Hobgoblin lab, providing a reproducible baseline for OS security and SSH access controls that were later transferred to AWS.
+
+### Container and supply chain
+
+- Scan OCI images with **Trivy** in CI
+- Use **IRSA** so workloads get least-privilege AWS access
+- Prevent unmanaged node IAM usage for application pods
+
+### Network and data protection
+
+- Deploy a **3-tier VPC**: public web, private EKS, data subnet
+- Protect ingress with **AWS WAF** and **ALB**
+- Use **S3 Gateway Endpoints** and strict VPC endpoint policies
+
+## Observability and Detection
+
+| Component | Purpose |
+|---|---|
+| Fluent Bit | App and system log forwarding to CloudWatch |
+| Amazon OpenSearch | Search and analytics for security events |
+| AWS GuardDuty | Continuous threat detection |
+| AWS Security Hub | Compliance posture and alerts |
+| IAM Access Analyzer | Resource exposure analysis |
+
+## Tech Stack
+
+- Compute: AWS EKS with Bottlerocket node groups
+- Networking: VPC, ALB, WAFv2, S3 Gateway Endpoints
+- Security: GuardDuty, Security Hub, KMS, IAM Access Analyzer
+- Observability: Fluent Bit, CloudWatch, OpenSearch
+- IaC: Terraform
+- CI/CD: GitHub Actions
+
+## Prerequisites
+
+- Terraform `>= 1.x`
+- AWS CLI configured with permissions for networking, EKS, IAM, and monitoring
+- `kubectl` installed
+
+## Notes
+
+This README is focused on architecture and project structure. Detailed deployment commands and module usage will be added as Terraform work progresses.
