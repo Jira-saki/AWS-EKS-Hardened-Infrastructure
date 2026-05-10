@@ -54,3 +54,11 @@ resource "libvirt_domain" "ep2_master" {
     target_type = "serial"
   }
 }
+
+# --- terraform/environments/local-hob/main.tf ---
+
+module "network" {
+  source = "../../modules/network"
+}
+
+# ในอนาคต เราจะเอา ID จาก module.network ไปใส่ใน module compute ครับ
