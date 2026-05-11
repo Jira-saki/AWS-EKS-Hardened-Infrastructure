@@ -19,11 +19,11 @@ This repo demonstrates the design and prototyping of a hardened AWS EKS moderniz
 
 ## Role
 
-Lead architect and implementer: defined the hybrid local/cloud workflow, built Terraform prototypes, and validated host-level hardening prior to AWS deployment.
+Lead architect and implementer: Responded to a production security breach [EP1](https://github.com/Jira-saki/The-Walking_Dead-22-Domains) by designing a hardened AWS infrastructure platform. Built and validated a hybrid local-to-cloud workflow, created modular Terraform infrastructure-as-code, and successfully secured the migration of 14 legacy domains to isolated, immutable infrastructure.
 
 ## Background
 
-This platform responds to EP1, a compromise of legacy domains on shared hosting caused by poor isolation and unmonitored lateral movement.
+This platform responds to [EP1](https://github.com/Jira-saki/The-Walking_Dead-22-Domains), a compromise of legacy domains on shared hosting caused by poor isolation and unmonitored lateral movement.
 
 - Previous issues: manual SSH access, shared kernels, weak tenant separation
 - EP2 objective: eliminate shared trust boundaries and enforce immutable, least-privilege infrastructure
