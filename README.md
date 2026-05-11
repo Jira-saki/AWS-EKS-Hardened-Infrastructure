@@ -117,10 +117,9 @@ graph TD
 
 ### Host-level security
 
-- Use **Bottlerocket OS** for EKS nodes
-- Minimal runtime footprint, read-only root filesystem, no SSH access
-- Node configuration managed via EKS and user data
-- Initial OS hardening and SSH security baselines were prototyped and validated in a bare-metal KVM environment (Hobgoblin) before being codified into AWS Bottlerocket configurations.
+- **Bottlerocket OS for EKS**: Enforcing an Immutable Infrastructure pattern by providing a *read-only root filesystem* and eliminating non-essential software. This significantly reduces the attack surface and ensures a consistent, secure operational state.
+- **Security by Design**: No SSH access and a minimal runtime footprint to *prevent lateral movement* and unauthorized host-level changes.
+- Codified Hardening: Initial security baselines were validated in the Hobgoblin (KVM) lab before being translated into automated AWS Bottlerocket configurations.
 
 ### Manual Hardening Logs
 
