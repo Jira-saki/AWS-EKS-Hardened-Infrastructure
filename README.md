@@ -31,23 +31,38 @@ This platform responds to EP1, a compromise of legacy domains on shared hosting 
 ## Project Structure
 
 ```text
-📂 ep2-infra
-├── main.tf              # Root Terraform configuration
-├── variables.tf         # Input variables
-├── outputs.tf           # Exposed outputs
-├── provider.tf          # Provider configuration
-├── terraform.tfstate    # Local state file
-├── assets/              # Architecture diagrams and supporting files
-└── modules/
-    ├── vpc/             # Network topology and endpoints
-    ├── eks/             # Cluster and node group configuration
-    ├── security/        # WAF, GuardDuty, Security Hub, IAM policies
-    └── logging/         # CloudWatch / OpenSearch observability
+📂 AWS-EKS-Hardened-Modernization
+├── 📂 terraform
+│   ├── 📂 environments
+│   │   └── 📂 local-hob            # [Orchestrator] Deployment for local KVM (Hobgoblin)
+│   │       ├── main.tf             # Main entry point (Invokes modules)
+│   │       ├── variables.tf        # Environment-specific variables
+│   │       ├── outputs.tf          # Global outputs
+│   │       └── terraform.tfvars    # Local sensitive values (Git ignored)
+│   │
+│   └── 📂 modules
+│       ├── 📂 network              # [Networking] DMZ & Isolated network topology
+│       │   ├── main.tf
+│       │   ├── variables.tf
+│       │   └── outputs.tf
+│       └── 📂 compute              # [Compute] Hardened VMs (Bastion, Workers)
+│           ├── main.tf
+│           ├── variables.tf
+│           └── outputs.tf
+│
+├── 📂 cloud-init                   # Configuration scripts for VM bootstrapping
+│   ├── common-init.yaml            # Base hardening & user setup
+│   └── bastion-init.yaml           # Bastion-specific setup (Docker, MariaDB)
+│
+├── 📂 scripts                      # Helper shell scripts for automation
+├── 📂 assets                       # Architecture diagrams (Mermaid / PNG)
+├── README.md                       # Project documentation
+└── .gitignore                      # Protecting state and sensitive files
 ```
 
 ## Hybrid Development Strategy
 
-This project follows a hybrid process that validates security design and hardening in my "Hobgoblin Host" (Thinkpad L15 i7 64GB) before cloud deployment.
+This project follows a hybrid process that validates security design and hardening in my "Hobgoblin Host" (Thinkpad L15 i7 64GB, Ubuntu 22.04.5 LTS) before cloud deployment.
 
 - Sandbox: Hobgoblin private KVM/QEMU environment for local prototyping and security validation
 - Purpose: prototype OS hardening and SSH baselines before codifying them into AWS Bottlerocket configurations
@@ -70,6 +85,7 @@ The design emphasizes:
 - Centralized logging and SIEM-ready analysis
 
 ## Local Sandbox (Hobgoblin Lab)
+![Local Hobgoblin Diagram](assets/hob-lab.png)
 
 Phase 1 validates host hardening and IaC patterns before cloud rollout.
 
@@ -81,10 +97,21 @@ Phase 1 validates host hardening and IaC patterns before cloud rollout.
 
 | Feature | Status | Notes |
 |---|:---:|---|
-| IaC provisioning | ✅ | Automated VM creation with Terraform + Libvirt |
-| SSH hardening | ✅ | Key-only auth, disabled root login, CIS-aligned access policies |
-| Environment isolation | ✅ | Dedicated storage pools and private Libvirt networks |
-| Cloud-init automation | 🚧 | Converting manual hardening into automated boot configuration |
+| IaC provisioning | ✅ | Modular Terraform with Libvirt (Passed validation)|
+| Environment isolation | ✅ | DMZ (DeMilitarized-Zone) and Isolated network zones implemented |
+| Cloud-init automation | 🚧 | Scripting MariaDB Legacy on Docker for Bastion Host |
+
+### Infrastructure Data Flow
+
+```mermaid
+graph TD
+    ENV["local-hob/main.tf (Orchestrator)"]
+    NET["modules/network/main.tf"]
+    COM["modules/compute/main.tf"]
+    ENV -- "1. Invoke" --> NET
+    NET -- "2. Send Outputs" --> ENV
+    ENV -- "3. Send Variables" --> COM
+```  
 
 ## Core Hardening Strategy
 
@@ -114,12 +141,12 @@ Initial hardening steps were documented in the Hobgoblin lab, providing a reprod
 ## Observability and Detection
 
 | Component | Purpose |
-|---|---|
-| Fluent Bit | App and system log forwarding to CloudWatch |
-| Amazon OpenSearch | Search and analytics for security events |
-| AWS GuardDuty | Continuous threat detection |
-| AWS Security Hub | Compliance posture and alerts |
-| IAM Access Analyzer | Resource exposure analysis |
+| :--- | :--- |
+| **Fluent Bit** | App and system log forwarding to CloudWatch |
+| **Amazon OpenSearch** | Search and analytics for security events |
+| **AWS GuardDuty** | Continuous threat detection |
+| **AWS Security Hub** | Compliance posture and alerts |
+| **IAM Access Analyzer** | Resource exposure analysis |
 
 ## Tech Stack
 
@@ -135,6 +162,7 @@ Initial hardening steps were documented in the Hobgoblin lab, providing a reprod
 - Terraform `>= 1.x`
 - AWS CLI configured with permissions for networking, EKS, IAM, and monitoring
 - `kubectl` installed
+- Phase 1 requires a local KVM/QEMU environment.
 
 ## Notes
 
