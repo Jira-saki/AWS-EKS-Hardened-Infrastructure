@@ -4,31 +4,31 @@ terraform {
   required_providers {
     libvirt = {
       source  = "dmacvicar/libvirt"
-      version = "0.7.6" # ระบุเวอร์ชันให้ตรงกับที่ติดตั้งไปครับ
+      version = "0.7.6" # Specify version matching the installed one
     }
   }
 }
-# Modules ที่เราจะใช้ใน main.tf หลัก (ALL VM and Disk จะถูกสร้างที่นี่) 
-#โดยจะรับค่าต่าง ๆ จาก main.tf หลักของแต่ละ environment
-#(เช่น local-hob) จะส่งค่าต่าง ๆ มาให้ เช่น pool_name, dmz_net_id, isolated_net_id
-# 1. สร้าง Volume (Hard Disk) จาก Image ที่โหลดมา
+# Modules that we will use in the main main.tf (ALL VM and Disk will be created here)
+# It will receive various values from the main main.tf of each environment
+# (e.g., local-hob) will pass values like pool_name, dmz_net_id, isolated_net_id
+# 1. Create Volume (Hard Disk) from loaded Image
 resource "libvirt_volume" "ep2_ubuntu_base" {
   name   = "ep2_ubuntu_base.qcow2"
-  pool   = var.pool_name # ระบุชื่อ pool ที่เราสร้างไว้ใน main.tf หลัก
+  pool   = var.pool_name # Specify the pool name we created in the main main.tf
   source = "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
   format = "qcow2"
 }
 
-# 2. ตัวที่เราจะขยายร่างจริง (Master Root Disk)
+# 2. The one we will expand as the actual instance (Master Root Disk)
 resource "libvirt_volume" "ep2_master_disk" {
   name           = "ep2_master_root.qcow2"
-  pool           = var.pool_name # ระบุชื่อ pool ที่เราสร้างไว้ใน main.tf หลัก
-  base_volume_id = libvirt_volume.ep2_ubuntu_base.id # อ้างอิงจากตัวบน
-  size           = 21474836480                       # ขยายเป็น 20GB ตรงนี้แทน!
+  pool           = var.pool_name # Specify the pool name we created in the main main.tf
+  base_volume_id = libvirt_volume.ep2_ubuntu_base.id # Reference from the above
+  size           = 21474836480                       # Expand to 20GB here instead!
   format         = "qcow2"
 }
 
-# 2. Cloud-init: สร้าง ISO สำหรับส่ง SSH Key เข้าไป (ไม่ต้องใช้ Password)
+# 2. Cloud-init: Create ISO to pass SSH Key (No password needed)
 resource "libvirt_cloudinit_disk" "commoninit" {
   name      = "ep2-commoninit.iso"
   pool      = "ep2_pool"
@@ -38,10 +38,9 @@ users:
   - name: jira
     sudo: ALL=(ALL) NOPASSWD:ALL
     shell: /bin/bash
-    password: "password123" 
     chpasswd: { expire: False }
     ssh_authorized_keys:
-      - ${file("/home/jira/.ssh/id_rsa.pub")} # ใส่ Public Key
+      - ${file("/home/jira/.ssh/id_rsa.pub")} # Add public key
 write_files:
   - path: /etc/netplan/50-cloud-init.yaml
     content: |
@@ -57,7 +56,7 @@ write_files:
 EOF
 }
 
-# 3. สร้างตัวเครื่อง VM (Master Node)
+# 3. Create VM instance (Master Node)
 resource "libvirt_domain" "ep2_master" {
   name   = "ep2-master-hardened"
   memory = "4096"
@@ -66,12 +65,12 @@ resource "libvirt_domain" "ep2_master" {
   cloudinit = libvirt_cloudinit_disk.commoninit.id
 
   network_interface {
-    # ใช้ ID ของเน็ตเวิร์กที่ส่งมาจากหัวหน้า (Orchestrator)
+    # Use the network ID sent from the main controller (Orchestrator)
     network_id = var.isolated_net_id 
   }
 
 disk {
-    volume_id = libvirt_volume.ep2_master_disk.id # เปลี่ยนมาชี้ที่ตัวที่ขยายร่างแล้ว
+    volume_id = libvirt_volume.ep2_master_disk.id # Changed to point to the expanded instance
   }
 
   console {
@@ -80,17 +79,16 @@ disk {
     target_type = "serial"
   }
 }
-# 4.1 สร้าง Volume สำหรับ Bastion Host (Jump Server)
+# 4.1 Create Volume for Bastion Host (Jump Server)
 resource "libvirt_volume" "ep2_bastion_disk" {
   name           = "ep2_bastion_root.qcow2"
-  pool           = var.pool_name # ระบุชื่อ pool ที่เราสร้างไว้ใน main.tf หลัก
-  base_volume_id = libvirt_volume.ep2_ubuntu_base.id # อ้างอิงจากตัวบน
-  size           = 10737418240                       # ขยายเป็น 10GB ตรงนี้แทน!
+  pool           = var.pool_name # Specify the pool name we created in the main main.tf
+  base_volume_id = libvirt_volume.ep2_ubuntu_base.id # Reference from the above
+  size           = 10737418240                       # Expand to 10GB here instead!
   format         = "qcow2"
 }
 
-
-# 4.2 build Bastion Host (Jump Server) สำหรับเข้าถึง Master Node จากภายนอก
+# 4.2 Build Bastion Host (Jump Server) to access Master Node from outside
 resource "libvirt_domain" "ep2_bastion" {
   name   = "ep2-bastion-gateway"
   memory = "1024"
