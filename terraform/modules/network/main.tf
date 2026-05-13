@@ -14,7 +14,7 @@ resource "libvirt_network" "dmz_net" {
   name      = "dmz-net"
   mode      = "nat"          # ให้ออกเน็ตได้ผ่าน Host
   domain    = "dmz.local"
-  addresses = ["192.168.122.0/24"]
+  addresses = ["192.168.150.0/24"]
 
   dns {
     enabled    = true

@@ -1,0 +1,184 @@
+
+--- FILE: ./modules/compute/main.tf ---
+# --- terraform/modules/compute/main.tf ---
+
+terraform {
+  required_providers {
+    libvirt = {
+      source  = "dmacvicar/libvirt"
+      version = "0.7.6" # ระบุเวอร์ชันให้ตรงกับที่ติดตั้งไปครับ
+    }
+  }
+}
+# 1. สร้าง Volume (Hard Disk) จาก Image ที่โหลดมา
+resource "libvirt_volume" "ep2_ubuntu_base" {
+  name   = "ep2_ubuntu_base.qcow2"
+  pool   = var.pool_name # ระบุชื่อ pool ที่เราสร้างไว้ใน main.tf หลัก
+  source = "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
+  format = "qcow2"
+}
+
+# 2. ตัวที่เราจะขยายร่างจริง (Master Root Disk)
+resource "libvirt_volume" "ep2_master_disk" {
+  name           = "ep2_master_root.qcow2"
+  pool           = var.pool_name # ระบุชื่อ pool ที่เราสร้างไว้ใน main.tf หลัก
+  base_volume_id = libvirt_volume.ep2_ubuntu_base.id # อ้างอิงจากตัวบน
+  size           = 21474836480                       # ขยายเป็น 20GB ตรงนี้แทน!
+  format         = "qcow2"
+}
+
+# 2. Cloud-init: สร้าง ISO สำหรับส่ง SSH Key เข้าไป (ไม่ต้องใช้ Password)
+resource "libvirt_cloudinit_disk" "commoninit" {
+  name      = "ep2-commoninit.iso"
+  pool      = "ep2_pool"
+  user_data = <<EOF
+#cloud-config
+users:
+  - name: jira
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${file("/home/jira/.ssh/id_rsa.pub")} # ใส่ Public Key
+EOF
+}
+
+# 3. สร้างตัวเครื่อง VM (Master Node)
+resource "libvirt_domain" "ep2_master" {
+  name   = "ep2-master-hardened"
+  memory = "4096"
+  vcpu   = 2
+
+  cloudinit = libvirt_cloudinit_disk.commoninit.id
+
+  network_interface {
+    # ใช้ ID ของเน็ตเวิร์กที่ส่งมาจากหัวหน้า (Orchestrator)
+    network_id = var.isolated_net_id 
+  }
+
+disk {
+    volume_id = libvirt_volume.ep2_master_disk.id # เปลี่ยนมาชี้ที่ตัวที่ขยายร่างแล้ว
+  }
+
+  console {
+    type        = "pty"
+    target_port = "0"
+    target_type = "serial"
+  }
+}
+--- FILE: ./modules/compute/variables.tf ---
+# --- terraform/modules/compute/variables.tf ---
+
+variable "dmz_net_id" {
+  type = string
+}
+
+variable "isolated_net_id" {
+  type = string
+}
+
+variable "pool_name" {
+  type = string
+}
+
+--- FILE: ./modules/network/main.tf ---
+# --- terraform/modules/network/main.tf ---
+
+terraform {
+  required_providers {
+    libvirt = {
+      source  = "dmacvicar/libvirt"
+      version = "0.7.6" # ล็อกเวอร์ชันให้ตรงกับที่เครื่อง Hobgoblin ใช้ครับ
+    }
+  }
+}
+
+# 1. DMZ Network (เน็ตขาเข้า/Public Zone)
+resource "libvirt_network" "dmz_net" {
+  name      = "dmz-net"
+  mode      = "nat"          # ให้ออกเน็ตได้ผ่าน Host
+  domain    = "dmz.local"
+  addresses = ["192.168.150.0/24"]
+
+  dns {
+    enabled    = true
+    local_only = false      # ยอมให้ Resolve DNS จากข้างนอกได้
+  }
+  autostart = true
+}
+
+# 2. Isolated Network (เน็ตขาใน/Private Zone)
+resource "libvirt_network" "isolated_net" {
+  name      = "isolated-net"
+  mode      = "none"         # Isolated: ปิดตาย ไม่มีการ Route ออกข้างนอก
+  domain    = "isolated.local"
+  addresses = ["192.168.200.0/24"]
+
+  dns {
+    enabled    = true
+    local_only = true       # Resolve เฉพาะภายในโซนนี้เท่านั้น
+  }
+  autostart = true
+}
+
+#--- ส่งค่าออกไปให้ Module อื่นเรียกใช้ (Output) ---
+output "dmz_net_name" {
+  value = libvirt_network.dmz_net.name
+}
+
+output "isolated_net_name" {
+  value = libvirt_network.isolated_net.name
+}
+--- FILE: ./modules/network/outputs.tf ---
+# --- terraform/modules/network/outputs.tf ---
+
+output "dmz_net_id" {
+  value = libvirt_network.dmz_net.id
+}
+
+output "isolated_net_id" {
+  value = libvirt_network.isolated_net.id
+}
+--- FILE: ./modules/storage/main.tf ---
+
+--- FILE: ./environments/local-hob/main.tf ---
+# --- terraform/environments/local-hob/main.tf ---
+
+module "network" {
+  source = "../../modules/network"
+}
+
+module "compute" {
+  source          = "../../modules/compute"
+  pool_name = libvirt_pool.ep2_pool.name
+  dmz_net_id      = module.network.dmz_net_id
+  isolated_net_id = module.network.isolated_net_id
+}
+
+resource "libvirt_pool" "ep2_pool" {
+  name = "ep2_pool"
+  type = "dir"
+  path = "/var/lib/libvirt/images/ep2-pool"
+}
+
+
+
+
+
+
+
+--- FILE: ./environments/local-hob/provider.tf ---
+terraform {
+  required_providers {
+    libvirt = {
+      source  = "dmacvicar/libvirt"
+      version = "0.7.6"
+    }
+  }
+}
+
+provider "libvirt" {
+  uri = "qemu:///system"
+
+}
+
+--- FILE: ./environments/local-hob/variables.tf ---

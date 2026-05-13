@@ -7,3 +7,7 @@ variable "dmz_net_id" {
 variable "isolated_net_id" {
   type = string
 }
+
+variable "pool_name" {
+  type = string
+}

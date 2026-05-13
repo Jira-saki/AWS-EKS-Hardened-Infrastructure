@@ -8,12 +8,24 @@ terraform {
     }
   }
 }
+# Modules ที่เราจะใช้ใน main.tf หลัก (ALL VM and Disk จะถูกสร้างที่นี่) 
+#โดยจะรับค่าต่าง ๆ จาก main.tf หลักของแต่ละ environment
+#(เช่น local-hob) จะส่งค่าต่าง ๆ มาให้ เช่น pool_name, dmz_net_id, isolated_net_id
 # 1. สร้าง Volume (Hard Disk) จาก Image ที่โหลดมา
 resource "libvirt_volume" "ep2_ubuntu_base" {
   name   = "ep2_ubuntu_base.qcow2"
-  pool   = "ep2_pool" # ระบุชื่อ pool ที่เราสร้างไว้ใน main.tf หลัก
+  pool   = var.pool_name # ระบุชื่อ pool ที่เราสร้างไว้ใน main.tf หลัก
   source = "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
   format = "qcow2"
+}
+
+# 2. ตัวที่เราจะขยายร่างจริง (Master Root Disk)
+resource "libvirt_volume" "ep2_master_disk" {
+  name           = "ep2_master_root.qcow2"
+  pool           = var.pool_name # ระบุชื่อ pool ที่เราสร้างไว้ใน main.tf หลัก
+  base_volume_id = libvirt_volume.ep2_ubuntu_base.id # อ้างอิงจากตัวบน
+  size           = 21474836480                       # ขยายเป็น 20GB ตรงนี้แทน!
+  format         = "qcow2"
 }
 
 # 2. Cloud-init: สร้าง ISO สำหรับส่ง SSH Key เข้าไป (ไม่ต้องใช้ Password)
@@ -26,8 +38,22 @@ users:
   - name: jira
     sudo: ALL=(ALL) NOPASSWD:ALL
     shell: /bin/bash
+    password: "password123" 
+    chpasswd: { expire: False }
     ssh_authorized_keys:
-      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCR3cJ7foBqE5m6Bitg1xebwkzHux9Hgh4zJzGwxH2kzdAb91ml6M+df/xyKG6uEEUkHKVLXdiSj2BT6p9mCFMs9ljRnJbVH4MMutM/UVyiXtu+Lcii2ibPtL3hTe8zHO65cMWSlTTeLYJPV3veEJ0mBObOSm47qzpaaVdYtgkgJgMj5qqx9k7NPvhWAaIp8JqRefj5aywbuMkwilvusi8iue0Kn/rdioVn9aQldOt1GmmuDjxZHjHX92Uhtf7e7y9KZesVvNrV915ALKCbXblB4y70EaRIxNj5pLOeJXaFemSw1bekimVhHzGylutg9h+xeaMHAM9JUSkUAixfGRGWVKH9UQHAOQyZ780AAysdVF14hY1GFbGWrsEyIEyg/e/JmSpvyEalSOhP7r+UlJtoGJDg+xRHW8M9SBzIGX1nA8JzqMGqzNgYYQ2Twlkde/fP+p38NT4s8Y/gkgHe1HKWZ0CQfk2oFtKSP7/TH5ZvDew0XrFHCw5DTsNeTADNiQszHVIhsWCIoJAx9gsdBtU/3oSurX/8ZrKqqsvmhlADzhRwJ0RJjNoLEIuYuKu4T2uXC87yeszjKS42j3AhDNEGacmZ/D5M0WJ3BTESsBa9Mwdh2nGxHk9OdUS1oJbGP34zqVFnOzdaxz8OPmLOwDCKrUy3c/Wuzg4sCT3KwG9Iow== jira@hobgoblin
+      - ${file("/home/jira/.ssh/id_rsa.pub")} # ใส่ Public Key
+write_files:
+  - path: /etc/netplan/50-cloud-init.yaml
+    content: |
+      network:
+        version: 2
+        ethernets:
+          ens3:
+            dhcp4: true
+            dhcp-identifier: mac
+          ens4:
+            dhcp4: true
+            optional: true
 EOF
 }
 
@@ -44,8 +70,46 @@ resource "libvirt_domain" "ep2_master" {
     network_id = var.isolated_net_id 
   }
 
+disk {
+    volume_id = libvirt_volume.ep2_master_disk.id # เปลี่ยนมาชี้ที่ตัวที่ขยายร่างแล้ว
+  }
+
+  console {
+    type        = "pty"
+    target_port = "0"
+    target_type = "serial"
+  }
+}
+# 4.1 สร้าง Volume สำหรับ Bastion Host (Jump Server)
+resource "libvirt_volume" "ep2_bastion_disk" {
+  name           = "ep2_bastion_root.qcow2"
+  pool           = var.pool_name # ระบุชื่อ pool ที่เราสร้างไว้ใน main.tf หลัก
+  base_volume_id = libvirt_volume.ep2_ubuntu_base.id # อ้างอิงจากตัวบน
+  size           = 10737418240                       # ขยายเป็น 10GB ตรงนี้แทน!
+  format         = "qcow2"
+}
+
+
+# 4.2 build Bastion Host (Jump Server) สำหรับเข้าถึง Master Node จากภายนอก
+resource "libvirt_domain" "ep2_bastion" {
+  name   = "ep2-bastion-gateway"
+  memory = "1024"
+  vcpu   = 1
+
+  cloudinit = libvirt_cloudinit_disk.commoninit.id # use the same cloud-init for simplicity
+
+  network_interface {
+    # in DMZ network for external access (act like a Nat Gateway)
+    network_id = var.dmz_net_id 
+  }
+
+  network_interface {
+    # in Isolated network to access Master Node (act like a Jump Server)
+    network_id = var.isolated_net_id
+  }
+
   disk {
-    volume_id = libvirt_volume.ep2_ubuntu_base.id
+    volume_id = libvirt_volume.ep2_bastion_disk.id
   }
 
   console {
