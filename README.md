@@ -1,6 +1,9 @@
 ![CI/CD](https://img.shields.io/github/actions/workflow/status/Jira-saki/aws-eks-hardened-modernization/ci.yml?label=CI%2FCD&logo=githubactions) ![Terraform](https://img.shields.io/badge/Terraform-1.x-7B42BC?logo=terraform) ![AWS EKS](https://img.shields.io/badge/AWS-EKS-FF9900?logo=amazonaws)
 
 # AWS EKS Hardened Modernization & Security Platform (EP2)
+> 🎯 **Professional Roadmap & Certification Alignment**
+> - **Current Milestone:** Actively prepping for **CKA (Certified Kubernetes Administrator)** ➔ Exam scheduled for **MID June, 2026**.
+> - **Next Milestone (Post-CKA):** Transitioning directly into **CKS (Certified Kubernetes Security Specialist) Hardening Phase**. This repository serves as my primary hands-on lab to validate CKS Security Domains (Supply Chain Security, Runtime Defense, and System Hardening).
 
 ## Summary
 
@@ -39,7 +42,11 @@ This platform responds to [EP1](https://github.com/Jira-saki/The-Walking_Dead-22
 │   │       ├── variables.tf        # Environment-specific variables
 │   │       ├── outputs.tf          # Global outputs
 │   │       └── terraform.tfvars    # Local sensitive values (Git ignored)
-│   │
+|   |
+│   │   └── 📂 aws-eks             # [Upcoming - Phase 2] Target AWS Infrastructure deployment
+│   │       ├── main.tf             # (To be implemented post-CKA in mid-June)
+│   │       └── variables.tf
+|   |
 │   └── 📂 modules
 │       ├── 📂 network              # [Networking] DMZ & Isolated network topology
 │       │   ├── main.tf
@@ -93,13 +100,22 @@ Phase 1 validates host hardening and IaC patterns before cloud rollout.
 - Purpose: simulate hardened infrastructure without cloud cost
 - Tools: Terraform, Libvirt, cloud-init
 
-### Current progress
+### 📊 Implementation Roadmap & Progress
 
-| Feature | Status | Notes |
-|---|:---:|---|
-| IaC provisioning | ✅ | Modular Terraform with Libvirt (Passed validation)|
-| Environment isolation | ✅ | DMZ (DeMilitarized-Zone) and Isolated network zones implemented |
-| Cloud-init automation | 🚧 | Scripting MariaDB Legacy on Docker for Bastion Host |
+To manage deployment risks and eliminate unnecessary cloud costs during the prototyping phase, the platform architecture is split into two distinct execution milestones aligned with my upcoming industry certifications (CKA/CKS in Early June 2026).
+
+| Phase / Feature | Milestone Target | Status | Architectural Notes |
+| :--- | :--- | :---: | :--- |
+| **[Phase 1] Local Sandbox Baseline** | Core Infrastructure | | *Validated on Hobgoblin (KVM/QEMU) Host* |
+| └─ IaC Provisioning | Local Automation | ✅ | Modular Terraform with Libvirt provider completed. |
+| └─ Environment Isolation | Network Topology | ✅ | DMZ and Isolated network zones successfully routed. |
+| └─ Cloud-init Automation | OS Bootstrapping | 🚧 | Finalizing MariaDB Legacy on Docker configuration. |
+| **[Phase 2] Cloud Target & Kube-SecOps** | **CKS Alignment Target** | Status | Architectural Notes |
+| └─ AWS EKS Infrastructure | Cluster Setup & Hardening | ⏳ | Translating Libvirt modules to AWS EKS baseline. |
+| └─ Bottlerocket OS Integration | System Hardening (22%) | ⏳ | Implementing read-only root FS & CIS Benchmarks. |
+| └─ Pre-deployment Guardrails | Supply Chain Security (20%) | ⏳ | Integrating **Trivy & Checkov** scan pipelines via GHA (Testing against OWASP Juice Shop). |
+| └─ Runtime Threat Detection | Runtime Security (20%) | ⏳ | Implementing **Falco** & Kernel-level anomaly detection. |
+| └─ Centralized Security Audit | Monitoring & Logging (20%) | ⏳ | Setting up **K8s Audit Logs** piping into OpenSearch SIEM. |
 
 ### Infrastructure Data Flow
 
@@ -147,14 +163,23 @@ Initial hardening steps were documented in the Hobgoblin lab, providing a reprod
 | **AWS Security Hub** | Compliance posture and alerts |
 | **IAM Access Analyzer** | Resource exposure analysis |
 
-## Tech Stack
+## 🛠️ Tech Stack (Hybrid Blueprint)
 
-- Compute: AWS EKS with Bottlerocket node groups
-- Networking: VPC, ALB, WAFv2, S3 Gateway Endpoints
-- Security: GuardDuty, Security Hub, KMS, IAM Access Analyzer
-- Observability: Fluent Bit, CloudWatch, OpenSearch
-- IaC: Terraform
-- CI/CD: GitHub Actions
+### 💻 Phase 1: Local Sandbox (Hobgoblin Lab)
+- **Virtualization & Hypervisor:** KVM / QEMU, Libvirt API
+- **Infrastructure as Code (IaC):** Terraform (`dmacvicar/libvirt` provider)
+- **OS Hardening & Bootstrapping:** Cloud-init (YAML declarations)
+- **Local Workload Simulation:** Docker, MariaDB (Simulating legacy source workloads)
+- **Local Security Auditing:** Trivy (Local config manifest parsing)
+- **Host Environment:** Ubuntu 22.04.5 LTS (ThinkPad L15 i7, 64GB RAM)
+
+### ☁️ Phase 2 & 3: AWS Cloud Target Architecture
+- **Compute Platform:** AWS EKS w/ Managed Node Groups (Bottlerocket OS)
+- **Networking & Data Perimeter:** AWS VPC (3-Tier Multi-AZ), ALB, S3 Gateway Endpoints
+- **Security & Threat Detection:** AWS WAFv2, AWS KMS, AWS GuardDuty (EKS Protection), AWS Security Hub, IAM Access Analyzer
+- **Shift-Left Security Automation:** Trivy (Container Image Scan), Checkov (IaC Static Analysis)
+- **Observability & SIEM Pipeline:** Fluent Bit, Amazon CloudWatch, Amazon OpenSearch SIEM
+- **CI/CD Pipeline:** GitHub Actions
 
 ## Prerequisites
 
