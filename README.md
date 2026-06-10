@@ -100,22 +100,22 @@ Phase 1 validates host hardening and IaC patterns before cloud rollout.
 - Purpose: simulate hardened infrastructure without cloud cost
 - Tools: Terraform, Libvirt, cloud-init
 
-### 📊 Implementation Roadmap & Progress
+## 📊 Implementation Roadmap & Progress
 
-To manage deployment risks and eliminate unnecessary cloud costs during the prototyping phase, the platform architecture is split into two distinct execution milestones aligned with my upcoming industry certifications (CKA/CKS in Early June 2026).
+To manage deployment risks and eliminate unnecessary cloud costs during the prototyping phase, the platform architecture is split into two distinct execution milestones aligned with my upcoming industry certifications (CKA in Mid June 2026 / AWS SCS to follow).
 
-| Phase / Feature | Milestone Target | Status | Architectural Notes |
-| :--- | :--- | :---: | :--- |
-| **[Phase 1] Local Sandbox Baseline** | Core Infrastructure | | *Validated on Hobgoblin (KVM/QEMU) Host* |
+| Phase / Feature | AWS SCS Alignment Target | Status | Architectural Notes |
+| :--- | :--- | :--- | :--- |
+| **[Phase 1] Local Sandbox Baseline** | **Core Infrastructure** | | *Validated on Hobgoblin (KVM/QEMU) Host* |
 | └─ IaC Provisioning | Local Automation | ✅ | Modular Terraform with Libvirt provider completed. |
 | └─ Environment Isolation | Network Topology | ✅ | DMZ and Isolated network zones successfully routed. |
 | └─ Cloud-init Automation | OS Bootstrapping | 🚧 | Finalizing MariaDB Legacy on Docker configuration. |
-| **[Phase 2] Cloud Target & Kube-SecOps** | **CKS Alignment Target** | Status | Architectural Notes |
-| └─ AWS EKS Infrastructure | Cluster Setup & Hardening | ⏳ | Translating Libvirt modules to AWS EKS baseline. |
-| └─ Bottlerocket OS Integration | System Hardening (22%) | ⏳ | Implementing read-only root FS & CIS Benchmarks. |
-| └─ Pre-deployment Guardrails | Supply Chain Security (20%) | ⏳ | Integrating **Trivy & Checkov** scan pipelines via GHA (Testing against OWASP Juice Shop). |
-| └─ Runtime Threat Detection | Runtime Security (20%) | ⏳ | Implementing **Falco** & Kernel-level anomaly detection. |
-| └─ Centralized Security Audit | Monitoring & Logging (20%) | ⏳ | Setting up **K8s Audit Logs** piping into OpenSearch SIEM. |
+| **[Phase 2] Cloud Target & AWS DevSecOps** | **SCS Domain Focus** | | *Production Target Environment* |
+| └─ AWS EKS Infrastructure | Infrastructure Security | ⏳ | Translating Libvirt modules to AWS EKS baseline. |
+| └─ Bottlerocket OS Integration | Data Protection & Hardening | ⏳ | Implementing read-only root FS & CIS Benchmarks. |
+| └─ Pre-deployment Guardrails | Secure CI/CD Pipelines | ⏳ | Integrating Trivy & Checkov scan pipelines via GHA (Testing against OWASP Juice Shop). |
+| └─ Runtime Threat Detection | Threat Detection & Remediation | ⏳ | Implementing AWS GuardDuty (EKS Protection) & runtime anomaly detection. |
+| └─ Centralized Security Audit | Logging & Monitoring | ⏳ | Setting up K8s Audit Logs piping into Amazon OpenSearch SIEM. | |
 
 ### Infrastructure Data Flow
 
