@@ -3,7 +3,7 @@
 # AWS EKS Hardened Modernization & Security Platform (EP2)
 > 🎯 **Professional Roadmap & Certification Alignment**
 > - **Current Milestone:** Actively prepping for **CKA (Certified Kubernetes Administrator)** ➔ Exam scheduled for **MID June, 2026**.
-> - **Next Milestone (Post-CKA):** Transitioning directly into **CKS (Certified Kubernetes Security Specialist) Hardening Phase**. This repository serves as my primary hands-on lab to validate CKS Security Domains (Supply Chain Security, Runtime Defense, and System Hardening).
+> - **Next Milestone (Post-CKA):** Transitioning directly into AWS Certified Security - Specialty (SCS) Implementation Phase. This repository serves as my primary hands-on lab to validate Advanced AWS Security Domains (Infrastructure Security, Identity & Access Management, Threat Detection, and Data Protection) integrated with containerized workloads.
 
 ## Summary
 
