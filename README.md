@@ -37,34 +37,34 @@ This platform responds to [EP1](https://github.com/Jira-saki/The-Walking_Dead-22
 📂 AWS-EKS-Hardened-Modernization
 ├── 📂 terraform
 │   ├── 📂 environments
-│   │   └── 📂 local-hob            # [Orchestrator] Deployment for local KVM (Hobgoblin)
-│   │       ├── main.tf             # Main entry point (Invokes modules)
-│   │       ├── variables.tf        # Environment-specific variables
-│   │       ├── outputs.tf          # Global outputs
-│   │       └── terraform.tfvars    # Local sensitive values (Git ignored)
-|   |
-│   │   └── 📂 aws-eks             # [Upcoming - Phase 2] Target AWS Infrastructure deployment
-│   │       ├── main.tf             # (To be implemented post-CKA in mid-June)
-│   │       └── variables.tf
-|   |
+│   │   ├── 📂 local-hob
+│   │   └── 📂 aws-eks
 │   └── 📂 modules
-│       ├── 📂 network              # [Networking] DMZ & Isolated network topology
-│       │   ├── main.tf
-│       │   ├── variables.tf
-│       │   └── outputs.tf
-│       └── 📂 compute              # [Compute] Hardened VMs (Bastion, Workers)
+│       ├── 📂 network
+│       ├── 📂 compute
+│       └── 📂 data-infra             # [NEW] AWS S3 Lakehouse, KMS Keys, and IRSA Roles for Spark
 │           ├── main.tf
 │           ├── variables.tf
 │           └── outputs.tf
 │
-├── 📂 cloud-init                   # Configuration scripts for VM bootstrapping
-│   ├── common-init.yaml            # Base hardening & user setup
-│   └── bastion-init.yaml           # Bastion-specific setup (Docker, MariaDB)
+├── 📂 gitops                         # [NEW] GitOps Directory (Argo CD Control Plane)
+│   ├── 📂 platform-services          # Platform operators deployed via Argo CD
+│   │   ├── spark-operator.yaml       # Argo CD Application mapping to Apache Spark Operator Helm
+│   │   └── monitoring.yaml           # Argo CD Application for Prometheus & Grafana
+│   └── 📂 pipelines                  # Application-level deployments
+│       └── spark-jobs-app.yaml       # Argo CD Application pointing to the spark-jobs directory
 │
-├── 📂 scripts                      # Helper shell scripts for automation
-├── 📂 assets                       # Architecture diagrams (Mermaid / PNG)
-├── README.md                       # Project documentation
-└── .gitignore                      # Protecting state and sensitive files
+├── 📂 spark-jobs                     # [NEW] Source Code & Manifests for Data Applications
+│   ├── 📂 src
+│   │   └── etl_process.py            # PySpark script (Business logic reading/writing to S3)
+│   ├── 📂 manifests
+│   │   └── spark-application.yaml    # SparkApplication CRD (Defines Driver, Executors, and Spot configurations)
+│   └── Dockerfile                    # Custom Spark Image with AWS SDK and necessary dependencies
+│
+├── 📂 cloud-init
+├── 📂 scripts
+├── 📂 assets
+└── README.md
 ```
 
 ## Hybrid Development Strategy
