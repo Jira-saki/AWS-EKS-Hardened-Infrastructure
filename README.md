@@ -102,9 +102,9 @@ Phase 1 validates host hardening and IaC patterns before cloud rollout.
 
 ## 📊 Implementation Roadmap & Progress
 
-To manage deployment risks and eliminate unnecessary cloud costs during the prototyping phase, the platform architecture is split into two distinct execution milestones aligned with my upcoming industry certifications (CKA in Mid June 2026 / AWS SCS to follow).
+To manage deployment risks and eliminate unnecessary cloud costs during the prototyping phase, the platform architecture is split into three distinct execution milestones aligned with my upcoming industry certifications (CKA in Mid June 2026 / AWS SCS and AWS DEA to follow).
 
-| Phase / Feature | AWS SCS Alignment Target | Status | Architectural Notes |
+| Phase / Feature | Certification Alignment Target | Status | Architectural Notes |
 | :--- | :--- | :--- | :--- |
 | **[Phase 1] Local Sandbox Baseline** | **Core Infrastructure** | | *Validated on Hobgoblin (KVM/QEMU) Host* |
 | └─ IaC Provisioning | Local Automation | ✅ | Modular Terraform with Libvirt provider completed. |
@@ -115,7 +115,13 @@ To manage deployment risks and eliminate unnecessary cloud costs during the prot
 | └─ Bottlerocket OS Integration | Data Protection & Hardening | ⏳ | Implementing read-only root FS & CIS Benchmarks. |
 | └─ Pre-deployment Guardrails | Secure CI/CD Pipelines | ⏳ | Integrating Trivy & Checkov scan pipelines via GHA (Testing against OWASP Juice Shop). |
 | └─ Runtime Threat Detection | Threat Detection & Remediation | ⏳ | Implementing AWS GuardDuty (EKS Protection) & runtime anomaly detection. |
-| └─ Centralized Security Audit | Logging & Monitoring | ⏳ | Setting up K8s Audit Logs piping into Amazon OpenSearch SIEM. | |
+| └─ Centralized Security Audit | Logging & Monitoring | ⏳ | Setting up K8s Audit Logs piping into Amazon OpenSearch SIEM. |
+| **[Phase 3] Modern Data Infrastructure & Analytics** | **DEA Domain Focus** | | *Distributed Workloads & Data Lakehouse Target* |
+| └─ Data Storage Hardening | Data Protection (S3 / KMS) | ⏳ | Implementing AWS S3 Lakehouse with KMS encryption and strict bucket policies. |
+| └─ GitOps for Big Data | Platform Automation | ⏳ | Deploying and managing Apache Spark Operator and monitoring stack (Prometheus/Grafana) via Argo CD. |
+| └─ Least-Privilege Execution | Workload Security (IRSA) | ⏳ | Configuring fine-grained IAM Roles for Service Accounts (IRSA) for secure PySpark application execution. |
+| └─ Scalable Workload Compute | Resource Optimization | ⏳ | Defining SparkApplication CRD targeting AWS Spot Instances for cost-effective distributed processing. |
+
 
 ### Infrastructure Data Flow
 
