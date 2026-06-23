@@ -1,6 +1,6 @@
 ![CI/CD](https://img.shields.io/github/actions/workflow/status/Jira-saki/aws-eks-hardened-modernization/ci.yml?label=CI%2FCD&logo=githubactions) ![Terraform](https://img.shields.io/badge/Terraform-1.x-7B42BC?logo=terraform) ![AWS EKS](https://img.shields.io/badge/AWS-EKS-FF9900?logo=amazonaws)
 
-# AWS EKS Hardened Modernization & Security Platform (EP2)
+# AWS EKS Hardened Infrastructure (EP2)
 > 🎯 **Professional Roadmap & Certification Alignment**
 > - **Current Milestone:** Actively prepping for **CKA (Certified Kubernetes Administrator)** ➔ Exam scheduled for **MID June, 2026**.
 > - **Next Milestone (Post-CKA):** Transitioning directly into AWS Certified Security - Specialty (SCS) and Certified Data Engineer - Associate (DEA) Implementation Phases.
@@ -34,32 +34,18 @@ This platform responds to [EP1](https://github.com/Jira-saki/The-Walking_Dead-22
 ## Project Structure
 
 ```text
-📂 AWS-EKS-Hardened-Modernization
+📂 AWS-EKS-Hardened-infrastructure
 ├── 📂 terraform
 │   ├── 📂 environments
 │   │   ├── 📂 local-hob
 │   │   └── 📂 aws-eks
 │   └── 📂 modules
 │       ├── 📂 network
-│       ├── 📂 compute
-│       └── 📂 data-infra             # [NEW] AWS S3 Lakehouse, KMS Keys, and IRSA Roles for Spark
-│           ├── main.tf
-│           ├── variables.tf
-│           └── outputs.tf
+│       └── 📂 compute
 │
-├── 📂 gitops                         # [NEW] GitOps Directory (Argo CD Control Plane)
-│   ├── 📂 platform-services          # Platform operators deployed via Argo CD
-│   │   ├── spark-operator.yaml       # Argo CD Application mapping to Apache Spark Operator Helm
-│   │   └── monitoring.yaml           # Argo CD Application for Prometheus & Grafana
-│   └── 📂 pipelines                  # Application-level deployments
-│       └── spark-jobs-app.yaml       # Argo CD Application pointing to the spark-jobs directory
-│
-├── 📂 spark-jobs                     # [NEW] Source Code & Manifests for Data Applications
-│   ├── 📂 src
-│   │   └── etl_process.py            # PySpark script (Business logic reading/writing to S3)
-│   ├── 📂 manifests
-│   │   └── spark-application.yaml    # SparkApplication CRD (Defines Driver, Executors, and Spot configurations)
-│   └── Dockerfile                    # Custom Spark Image with AWS SDK and necessary dependencies
+├── 📂 gitops                         # GitOps Directory (Argo CD Control Plane)
+│   └── 📂 platform-services          # Platform operators deployed via Argo CD
+│       └── monitoring.yaml           # Argo CD Application for Prometheus & Grafana
 │
 ├── 📂 cloud-init
 ├── 📂 scripts
@@ -116,11 +102,6 @@ To manage deployment risks and eliminate unnecessary cloud costs during the prot
 | └─ Pre-deployment Guardrails | Secure CI/CD Pipelines | ⏳ | Integrating Trivy & Checkov scan pipelines via GHA (Testing against OWASP Juice Shop). |
 | └─ Runtime Threat Detection | Threat Detection & Remediation | ⏳ | Implementing AWS GuardDuty (EKS Protection) & runtime anomaly detection. |
 | └─ Centralized Security Audit | Logging & Monitoring | ⏳ | Setting up K8s Audit Logs piping into Amazon OpenSearch SIEM. |
-| **[Phase 3] Modern Data Infrastructure & Analytics** | **DEA Domain Focus** | | *Distributed Workloads & Data Lakehouse Target* |
-| └─ Data Storage Hardening | Data Protection (S3 / KMS) | ⏳ | Implementing AWS S3 Lakehouse with KMS encryption and strict bucket policies. |
-| └─ GitOps for Big Data | Platform Automation | ⏳ | Deploying and managing Apache Spark Operator and monitoring stack (Prometheus/Grafana) via Argo CD. |
-| └─ Least-Privilege Execution | Workload Security (IRSA) | ⏳ | Configuring fine-grained IAM Roles for Service Accounts (IRSA) for secure PySpark application execution. |
-| └─ Scalable Workload Compute | Resource Optimization | ⏳ | Defining SparkApplication CRD targeting AWS Spot Instances for cost-effective distributed processing. |
 
 
 ### Infrastructure Data Flow
@@ -159,7 +140,7 @@ Initial hardening steps were documented in the Hobgoblin lab, providing a reprod
 - Protect ingress with **AWS WAF** and **ALB**
 - Use **S3 Gateway Endpoints** and strict VPC endpoint policies
 
-## Observability and Detection
+## 📊 Observability and Detection
 
 | Component | Purpose |
 | :--- | :--- |
@@ -179,14 +160,13 @@ Initial hardening steps were documented in the Hobgoblin lab, providing a reprod
 - **Local Security Auditing:** Trivy (Local config manifest parsing)
 - **Host Environment:** Ubuntu 22.04.5 LTS (ThinkPad L15 i7, 64GB RAM)
 
-### ☁️ Phase 2 & 3: AWS Cloud Target Architecture
+### ☁️ Phase 2: AWS Cloud Target Architecture
 - **Compute Platform:** AWS EKS w/ Managed Node Groups (Bottlerocket OS)
 - **Networking & Data Perimeter:** AWS VPC (3-Tier Multi-AZ), ALB, S3 Gateway Endpoints
 - **Security & Threat Detection:** AWS WAFv2, AWS KMS, AWS GuardDuty (EKS Protection), AWS Security Hub, IAM Access Analyzer
 - **Shift-Left Security Automation:** Trivy (Container Image Scan), Checkov (IaC Static Analysis)
 - **Observability & SIEM Pipeline:** Fluent Bit, Amazon CloudWatch, Amazon OpenSearch SIEM
 - **CI/CD Pipeline:** GitHub Actions
-
 ## Prerequisites
 
 - Terraform `>= 1.x`
