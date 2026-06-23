@@ -7,7 +7,7 @@
 
 ## Summary
 
-This repo demonstrates the design and prototyping of a hardened AWS EKS modernization platform for migrating 14 legacy sites from insecure shared hosting to immutable infrastructure.
+This repo demonstrates the design and prototyping of a hardened, highly secure AWS EKS platform built on immutable infrastructure and strict isolation principles.
 
 - Architecture built for security, isolation, and operational visibility
 - Local first: validated tooling and hardening in a private KVM/QEMU lab ("Hobgoblin") before cloud rollout
@@ -51,6 +51,7 @@ This platform responds to [EP1](https://github.com/Jira-saki/The-Walking_Dead-22
 ├── 📂 scripts
 ├── 📂 assets
 └── README.md
+```
 
 ## Hybrid Development Strategy
 
@@ -89,7 +90,7 @@ To manage deployment risks and eliminate unnecessary cloud costs during the prot
 | **[Phase 1] Local Sandbox Baseline** | **Core Infrastructure** | | *Validated on Hobgoblin (KVM/QEMU) Host* |
 | └─ IaC Provisioning | Local Automation | ✅ | Modular Terraform with Libvirt provider completed. |
 | └─ Environment Isolation | Network Topology | ✅ | DMZ and Isolated network zones successfully routed. |
-| └─ Cloud-init Automation | OS Bootstrapping | 🚧 | Finalizing MariaDB Legacy on Docker configuration. |
+| └─ Cloud-init Automation | OS Bootstrapping | ✅ | Hardened base image cloud-init configuration completed. |
 | **[Phase 2] Cloud Target & AWS DevSecOps** | **SCS Domain Focus** | | *Production Target Environment* |
 | └─ AWS EKS Infrastructure | Infrastructure Security | ⏳ | Translating Libvirt modules to AWS EKS baseline. |
 | └─ Bottlerocket OS Integration | Data Protection & Hardening | ⏳ | Implementing read-only root FS & CIS Benchmarks. |
@@ -98,6 +99,7 @@ To manage deployment risks and eliminate unnecessary cloud costs during the prot
 | └─ Centralized Security Audit | Logging & Monitoring | ⏳ | Setting up K8s Audit Logs piping into Amazon OpenSearch SIEM. |
 
 ## Infrastructure Data Flow
+```mermaid
 graph TD
     ENV["local-hob/main.tf (Orchestrator)"]
     NET["modules/network/main.tf"]
@@ -105,6 +107,7 @@ graph TD
     ENV -- "1. Invoke" --> NET
     NET -- "2. Send Outputs" --> ENV
     ENV -- "3. Send Variables" --> COM
+```
 
 ## Core Hardening Strategy
 
@@ -146,7 +149,6 @@ Initial hardening steps were documented in the Hobgoblin lab, providing a reprod
 - **Virtualization & Hypervisor:** KVM / QEMU, Libvirt API
 - **Infrastructure as Code (IaC):** Terraform (`dmacvicar/libvirt` provider)
 - **OS Hardening & Bootstrapping:** Cloud-init (YAML declarations)
-- **Local Workload Simulation:** Docker, MariaDB (Simulating legacy source workloads)
 - **Local Security Auditing:** Trivy (Local config manifest parsing)
 - **Host Environment:** Ubuntu 22.04.5 LTS (ThinkPad L15 i7, 64GB RAM)
 
