@@ -13,6 +13,7 @@ This repo demonstrates the design and prototyping of a hardened, highly secure A
 - Local first: validated tooling and hardening in a private KVM/QEMU lab ("Hobgoblin") before cloud rollout
 - Cloud ready: AWS EKS with Bottlerocket nodes, IRSA, strict VPC segmentation, and SIEM-style observability
 
+
 ## What this demonstrates
 
 - End-to-end infrastructure design and implementation with Terraform
@@ -63,6 +64,8 @@ This project follows a hybrid process that validates security design and hardeni
 
 ## Architecture Overview
 
+![AWS Cloud Target Architecture](assets/AWS-SCS.png)
+
 This project is built in two phases:
 1. Local prototyping with **Terraform + Libvirt** on a private KVM/QEMU host
 2. Production deployment on **AWS EKS** with hardened Bottlerocket node groups
@@ -74,6 +77,8 @@ The design emphasizes:
 - Centralized logging and SIEM-ready analysis
 
 ## Local Sandbox (Hobgoblin Lab)
+
+![Hobgoblin Local Hypervisor Topology](assets/hob-lab.png)
 
 Phase 1 validates host hardening and IaC patterns before cloud rollout.
 
