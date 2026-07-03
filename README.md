@@ -2,7 +2,7 @@
 
 # AWS EKS Hardened Infrastructure (EP2)
 > 🎯 **Professional Roadmap & Certification Alignment**
-> - **Current Milestone:** Actively prepping for **CKA (Certified Kubernetes Administrator)** ➔ Exam scheduled for **MID June, 2026**.
+> - **Current Milestone:** Actively prepping for **CKA (Certified Kubernetes Administrator)** ➔ Exam scheduled for **July, 2026**.
 > - **Next Milestone (Post-CKA):** Transitioning directly into **AWS Certified Security - Specialty (SCS)** Implementation Phase.
 
 ## Summary
