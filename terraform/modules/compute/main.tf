@@ -4,73 +4,78 @@ terraform {
   required_providers {
     libvirt = {
       source  = "dmacvicar/libvirt"
-      version = "0.7.6" # Specify version matching the installed one
+      version = "0.7.6"
     }
   }
 }
-# Modules that we will use in the main main.tf (ALL VM and Disk will be created here)
-# It will receive various values from the main main.tf of each environment
-# (e.g., local-hob) will pass values like pool_name, dmz_net_id, isolated_net_id
+
+# =================================================================
 # 1. Create Volume (Hard Disk) from loaded Image
+# =================================================================
 resource "libvirt_volume" "ep2_ubuntu_base" {
   name   = "ep2_ubuntu_base.qcow2"
-  pool   = var.pool_name # Specify the pool name we created in the main main.tf
+  pool   = var.pool_name
   source = "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
   format = "qcow2"
 }
 
-# 2. The one we will expand as the actual instance (Master Root Disk)
+# Master Root Disk (20GB)
 resource "libvirt_volume" "ep2_master_disk" {
   name           = "ep2_master_root.qcow2"
-  pool           = var.pool_name # Specify the pool name we created in the main main.tf
-  base_volume_id = libvirt_volume.ep2_ubuntu_base.id # Reference from the above
-  size           = 21474836480                       # Expand to 20GB here instead!
+  pool           = var.pool_name
+  base_volume_id = libvirt_volume.ep2_ubuntu_base.id
+  size           = 21474836480 
   format         = "qcow2"
 }
 
-# 2. Cloud-init: Create ISO to pass SSH Key (No password needed)
-resource "libvirt_cloudinit_disk" "commoninit" {
-  name      = "ep2-commoninit.iso"
-  pool      = "ep2_pool"
-  user_data = <<EOF
-#cloud-config
-users:
-  - name: jira
-    sudo: ALL=(ALL) NOPASSWD:ALL
-    shell: /bin/bash
-    chpasswd: { expire: False }
-    ssh_authorized_keys:
-      - ${file("/home/jira/.ssh/id_rsa.pub")} # Add public key
-write_files:
-  - path: /etc/netplan/50-cloud-init.yaml
-    content: |
-      network:
-        version: 2
-        ethernets:
-          ens3:
-            dhcp4: true
-            dhcp-identifier: mac
-          ens4:
-            dhcp4: true
-            optional: true
-EOF
+# Bastion Root Disk (10GB) - ประกาศตรงนี้รอบเดียวพอครับ!
+resource "libvirt_volume" "ep2_bastion_disk" {
+  name           = "ep2_bastion_root.qcow2"
+  pool           = var.pool_name
+  base_volume_id = libvirt_volume.ep2_ubuntu_base.id
+  size           = 10737418240 
+  format         = "qcow2"
 }
 
-# 3. Create VM instance (Master Node)
+# =================================================================
+# 2. Cloud-init: Create ISO to pass SSH Key
+# =================================================================
+# แยกไฟล์ ISO ของ Bastion
+resource "libvirt_cloudinit_disk" "bastion_init" {
+  name      = "ep2-bastion-init.iso"
+  pool      = var.pool_name
+  user_data = templatefile("${path.module}/../../../cloud-init/bastion.cfg", {
+    ssh_key = file("/home/jira/.ssh/id_rsa.pub")
+  })
+}
+
+# แยกไฟล์ ISO ของ Master
+resource "libvirt_cloudinit_disk" "master_init" {
+  name      = "ep2-master-init.iso"
+  pool      = var.pool_name
+  user_data = templatefile("${path.module}/../../../cloud-init/k8s-control-plane.cfg", {
+    ssh_key = file("/home/jira/.ssh/id_rsa.pub")
+  })
+}
+
+# =================================================================
+# 3. Create VM instances
+# =================================================================
+
+# 🚀 เครื่อง Master Node (หลบอยู่ใน Isolated Net)
 resource "libvirt_domain" "ep2_master" {
   name   = "ep2-master-hardened"
   memory = "4096"
   vcpu   = 2
 
-  cloudinit = libvirt_cloudinit_disk.commoninit.id
+  cloudinit = libvirt_cloudinit_disk.master_init.id # ✅ แก้เป็นตัวแยกของตัวเองเรียบร้อย
 
   network_interface {
-    # Use the network ID sent from the main controller (Orchestrator)
     network_id = var.isolated_net_id 
   }
 
-disk {
-    volume_id = libvirt_volume.ep2_master_disk.id # Changed to point to the expanded instance
+  disk {
+    volume_id = libvirt_volume.ep2_master_disk.id
   }
 
   console {
@@ -79,30 +84,20 @@ disk {
     target_type = "serial"
   }
 }
-# 4.1 Create Volume for Bastion Host (Jump Server)
-resource "libvirt_volume" "ep2_bastion_disk" {
-  name           = "ep2_bastion_root.qcow2"
-  pool           = var.pool_name # Specify the pool name we created in the main main.tf
-  base_volume_id = libvirt_volume.ep2_ubuntu_base.id # Reference from the above
-  size           = 10737418240                       # Expand to 10GB here instead!
-  format         = "qcow2"
-}
 
-# 4.2 Build Bastion Host (Jump Server) to access Master Node from outside
+# 🛡️ เครื่อง Bastion Host (Gateway เชื่อมต่อสองฝั่ง)
 resource "libvirt_domain" "ep2_bastion" {
   name   = "ep2-bastion-gateway"
   memory = "1024"
   vcpu   = 1
 
-  cloudinit = libvirt_cloudinit_disk.commoninit.id # use the same cloud-init for simplicity
+  cloudinit = libvirt_cloudinit_disk.bastion_init.id # ✅ แก้เป็นตัวแยกของตัวเองเรียบร้อย
 
   network_interface {
-    # in DMZ network for external access (act like a Nat Gateway)
     network_id = var.dmz_net_id 
   }
 
   network_interface {
-    # in Isolated network to access Master Node (act like a Jump Server)
     network_id = var.isolated_net_id
   }
 
