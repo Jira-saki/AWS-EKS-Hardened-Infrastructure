@@ -64,7 +64,7 @@ This project follows a hybrid process that validates security design and hardeni
 
 ## Architecture Overview
 
-![AWS Cloud Target Architecture](assets/AWS-SCS.png)
+![AWS Cloud Target Architecture](assets/AWS_SCS2.png)
 
 This project is built in two phases:
 1. Local prototyping with **Terraform + Libvirt** on a private KVM/QEMU host
@@ -78,7 +78,7 @@ The design emphasizes:
 
 ## Local Sandbox (Hobgoblin Lab)
 
-![Hobgoblin Local Hypervisor Topology](assets/hob-lab.png)
+![Hobgoblin Local Hypervisor Topology](assets/hob-lab2.png)
 
 Phase 1 validates host hardening and IaC patterns before cloud rollout.
 
