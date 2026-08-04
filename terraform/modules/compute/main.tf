@@ -45,7 +45,7 @@ resource "libvirt_cloudinit_disk" "bastion_init" {
   name      = "ep2-bastion-init.iso"
   pool      = var.pool_name
   user_data = templatefile("${path.module}/../../../cloud-init/bastion.cfg", {
-    ssh_key = file("/home/jira/.ssh/id_rsa.pub")
+    ssh_key = file(pathexpand(var.ssh_pub_key_path))
   })
 }
 
@@ -54,7 +54,7 @@ resource "libvirt_cloudinit_disk" "master_init" {
   name      = "ep2-master-init.iso"
   pool      = var.pool_name
   user_data = templatefile("${path.module}/../../../cloud-init/k8s-control-plane.cfg", {
-    ssh_key = file("/home/jira/.ssh/id_rsa.pub")
+    ssh_key = file(pathexpand(var.ssh_pub_key_path))
   })
 }
 
@@ -68,7 +68,7 @@ resource "libvirt_domain" "ep2_master" {
   memory = "4096"
   vcpu   = 2
 
-  cloudinit = libvirt_cloudinit_disk.master_init.id # ✅ แก้เป็นตัวแยกของตัวเองเรียบร้อย
+  cloudinit = libvirt_cloudinit_disk.master_init.id 
 
   network_interface {
     network_id = var.isolated_net_id 
@@ -91,7 +91,7 @@ resource "libvirt_domain" "ep2_bastion" {
   memory = "1024"
   vcpu   = 1
 
-  cloudinit = libvirt_cloudinit_disk.bastion_init.id # ✅ แก้เป็นตัวแยกของตัวเองเรียบร้อย
+  cloudinit = libvirt_cloudinit_disk.bastion_init.id 
 
   network_interface {
     network_id = var.dmz_net_id 

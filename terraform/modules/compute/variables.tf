@@ -11,3 +11,8 @@ variable "isolated_net_id" {
 variable "pool_name" {
   type = string
 }
+
+variable "ssh_pub_key_path" {
+  type = string
+  default = "~/.ssh/id_rsa.pub"
+}

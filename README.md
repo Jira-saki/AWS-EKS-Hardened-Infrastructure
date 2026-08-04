@@ -5,173 +5,200 @@
 > - **Completed Milestone:** ✅ **CKA (Certified Kubernetes Administrator)** ➔ Certified (2026)
 > - **Current Focus:** Transitioning into **AWS Certified Data Engineer – Associate (DEA)** & **AWS Certified Machine Learning (MLA)** Implementation Phase.
 > - **Platform Target:** Evolving into a **Secured MLOps & Inference Platform PoC** focusing on zero-trust data access, read-only Bottlerocket nodes, and inference audit logging.
+
 ## Summary
+![CI/CD](https://img.shields.io/github/actions/workflow/status/Jira-saki/AWS-EKS-Hardened-infrastructure/ci.yml?label=CI%2FCD&logo=githubactions)
+![Release](https://img.shields.io/badge/Release-v1.0.0--production--baseline-success?logo=git)
+![Terraform](https://img.shields.io/badge/Terraform-1.x-7B42BC?logo=terraform)
+![AWS EKS](https://img.shields.io/badge/AWS-EKS-FF9900?logo=amazonaws)
+![CKA](https://img.shields.io/badge/Kubernetes-CKA%20Certified-326CE5?logo=kubernetes&logoColor=white)
 
-This repo demonstrates the design and prototyping of a hardened, highly secure AWS EKS platform built on immutable infrastructure and strict isolation principles.
+# AWS EKS Hardened Infrastructure (EP2)
 
-- Architecture built for security, isolation, and operational visibility
-- Local first: validated tooling and hardening in a private KVM/QEMU lab ("Hobgoblin") before cloud rollout
-- Cloud ready: AWS EKS with Bottlerocket nodes, IRSA, strict VPC segmentation, and SIEM-style observability
+> Professional Roadmap & Platform Strategy
+>
+> - CKA certified (2026)
+> - Baseline: `v1.0.0-production-baseline` (Bottlerocket OS, IRSA)
+> - Next steps: AWS DEA-C01, MLA-C01
+> - Future: Secured MLOps & inference PoC (zero-trust data, private vector DBs, audit-logged pipelines)
 
+---
 
-## What this demonstrates
+## Executive summary
 
-- End-to-end infrastructure design and implementation with Terraform
-- Host hardening and secure local prototyping before production deployment
-- Deployable security controls for legacy web workloads on AWS
-- Observability and threat detection integration for operational readiness
+This repository contains a hardened, zero-trust AWS EKS baseline implemented with Terraform and validated through automated CI/CD security gates.
 
-## Role
+- Removes SSH access and public control-plane exposure
+- Uses Bottlerocket managed node groups for immutable hosts
+- Enforces least-privilege via OIDC + IRSA
+- Uses AWS KMS CMKs for envelope encryption
+- CI gates: Terraform validate, Checkov (IaC), Trivy (images)
 
-Lead architect and implementer: Responded to a production security breach [EP1](https://github.com/Jira-saki/The-Walking_Dead-22-Domains) by designing a hardened AWS infrastructure platform. Built and validated a hybrid local-to-cloud workflow, created modular Terraform infrastructure-as-code, and successfully secured the migration of 14 legacy domains to isolated, immutable infrastructure.
+---
 
-## Background
+## Hybrid development strategy
 
-This platform responds to [EP1](https://github.com/Jira-saki/The-Walking_Dead-22-Domains), a compromise of legacy domains on shared hosting caused by poor isolation and unmonitored lateral movement.
+Two-phase validation to reduce risk and cost:
 
-- Previous issues: manual SSH access, shared kernels, weak tenant separation
-- EP2 objective: eliminate shared trust boundaries and enforce immutable, least-privilege infrastructure
-
-## Project Structure
-
-```text
-📂 AWS-EKS-Hardened-infrastructure
-├── 📂 terraform
-│   ├── 📂 environments
-│   │   ├── 📂 local-hob
-│   │   └── 📂 aws-eks
-│   └── 📂 modules
-│       ├── 📂 network
-│       └── 📂 compute
-│
-├── 📂 gitops                         # GitOps Directory (Argo CD Control Plane)
-│   └── 📂 platform-services          # Platform operators deployed via Argo CD
-│       └── monitoring.yaml           # Argo CD Application for Prometheus & Grafana
-│
-├── 📂 cloud-init
-├── 📂 scripts
-├── 📂 assets
-└── README.md
-```
-
-## Hybrid Development Strategy
-
-This project follows a hybrid process that validates security design and hardening in my "Hobgoblin Host" (Thinkpad L15 i7 64GB, Ubuntu 22.04.5 LTS) before cloud deployment.
-
-- **Sandbox:** Hobgoblin private KVM/QEMU environment for local prototyping and security validation
-- **Purpose:** Prototype OS hardening and SSH baselines before codifying them into AWS Bottlerocket configurations
-- **Outcome:** Reduce cloud deployment risk and demonstrate hands-on home lab capability
-
-## Architecture Overview
-
-![AWS Cloud Target Architecture](assets/AWS_SCS2.png)
-
-This project is built in two phases:
-1. Local prototyping with **Terraform + Libvirt** on a private KVM/QEMU host
-2. Production deployment on **AWS EKS** with hardened Bottlerocket node groups
-
-The design emphasizes:
-- Immutable compute and minimal host attack surface
-- Least-privilege identity using IRSA
-- Strict network segmentation with VPC endpoints and ALB/WAF protection
-- Centralized logging and SIEM-ready analysis
-
-## Local Sandbox (Hobgoblin Lab)
+1. Local sandbox ("Hobgoblin"): KVM/QEMU lab for OS hardening and cloud-init validation.
+2. AWS target: translate validated baselines into an AWS EKS architecture (Bottlerocket, KMS, IRSA).
 
 ![Hobgoblin Local Hypervisor Topology](assets/hob-lab2.png)
 
-Phase 1 validates host hardening and IaC patterns before cloud rollout.
+---
 
-- **Host:** Private Ubuntu-based KVM/QEMU server
-- **Purpose:** Simulate hardened infrastructure without cloud cost
-- **Tools:** Terraform, Libvirt, cloud-init
+## AWS target architecture & security pillars
 
-## 📊 Implementation Roadmap & Progress
+- 3-tier network segmentation (public ALB/WAF, private application subnets, isolated data subnets)
+- Private EKS control plane (API endpoint = Private Only)
+- Bottlerocket managed node groups (no SSH, read-only root)
+- AWS KMS CMKs for secrets and EBS encryption
+- OIDC + IRSA for least-privilege service identities
 
-To manage deployment risks and eliminate unnecessary cloud costs during the prototyping phase, the platform architecture is split into two distinct execution milestones aligned with my industry certifications (CKA in Mid June 2026 / AWS SCS to follow).
+![AWS Cloud Target Architecture](assets/AWS_SCS2.png)
 
-| Phase / Feature | Certification Alignment Target | Status | Architectural Notes |
-| :--- | :--- | :--- | :--- |
-| **[Phase 1] Local Sandbox Baseline** | **Core Infrastructure** | | *Validated on Hobgoblin (KVM/QEMU) Host* |
-| └─ IaC Provisioning | Local Automation | ✅ | Modular Terraform with Libvirt provider completed. |
-| └─ Environment Isolation | Network Topology | ✅ | DMZ and Isolated network zones successfully routed. |
-| └─ Cloud-init Automation | OS Bootstrapping | ✅ | Hardened base image cloud-init configuration completed. |
-| **[Phase 2] Cloud Target & AWS DevSecOps** | **SCS Domain Focus** | | *Production Target Environment* |
-| └─ AWS EKS Infrastructure | Infrastructure Security | ⏳ | Translating Libvirt modules to AWS EKS baseline. |
-| └─ Bottlerocket OS Integration | Data Protection & Hardening | ⏳ | Implementing read-only root FS & CIS Benchmarks. |
-| └─ Pre-deployment Guardrails | Secure CI/CD Pipelines | ⏳ | Integrating Trivy & Checkov scan pipelines via GHA (Testing against OWASP Juice Shop). |
-| └─ Runtime Threat Detection | Threat Detection & Remediation | ⏳ | Implementing AWS GuardDuty (EKS Protection) & runtime anomaly detection. |
-| └─ Centralized Security Audit | Logging & Monitoring | ⏳ | Setting up K8s Audit Logs piping into Amazon OpenSearch SIEM. |
+---
 
-## Infrastructure Data Flow
-```mermaid
-graph TD
-    ENV["local-hob/main.tf (Orchestrator)"]
-    NET["modules/network/main.tf"]
-    COM["modules/compute/main.tf"]
-    ENV -- "1. Invoke" --> NET
-    NET -- "2. Send Outputs" --> ENV
-    ENV -- "3. Send Variables" --> COM
+## Security control matrix
+
+| Domain | Implemented control | Threats addressed | Verification |
+|---|---|---|---|
+| Network perimeter | 3-tier VPC + private API endpoint | Unauthorized control-plane access | Terraform spec / AWS CLI |
+| Compute | Bottlerocket OS (read-only root) | Host compromise, container escape | CIS benchmarks / node spec |
+| Identity & access | IRSA (IAM roles for service accounts) | Credential leakage, over-privilege | IAM policy audit / OIDC |
+| Data protection | AWS KMS CMKs (envelope encryption) | Unencrypted secrets & volumes | KMS policy inspection |
+| Supply chain | Checkov (IaC) + Trivy (images) | Misconfigs, vulnerable dependencies | GitHub Actions pipeline |
+
+---
+
+## Project structure (high level)
+
+```text
+.
+├── .github/workflows/      # CI: terraform validate, Checkov, Trivy
+├── terraform/
+│   ├── environments/       # local-hob, aws-eks
+│   └── modules/            # network, compute, storage, kms
+├── cloud-init/             # local sandbox manifests
+├── assets/                 # diagrams and topology images
+└── README.md
 ```
 
-## Core Hardening Strategy
+---
 
-### Host-level Security
+## DevSecOps CI/CD (what runs on PRs)
 
-- **Bottlerocket OS for EKS:** Enforcing an Immutable Infrastructure pattern by providing a read-only root filesystem and eliminating non-essential software. This significantly reduces the attack surface and ensures a consistent, secure operational state.
-- **Security by Design:** No SSH access and a minimal runtime footprint to prevent lateral movement and unauthorized host-level changes.
-- **Codified Hardening:** Initial security baselines were validated in the Hobgoblin (KVM) lab before being translated into automated AWS Bottlerocket configurations.
+```text
+[ Git Push / PR ]
+       │
+       ▼
+[ 1. Terraform Format & Validate ]
+       │
+       ▼
+[ 2. Checkov IaC Hardening Scan ]
+       │
+       ▼
+[ 3. Trivy Vulnerability Scan ]
+       │
+       ▼
+┌───────────────────────────────┐
+│     Security Gates Passed?    │
+└───────────────────────────────┘
+    │                       │
+   YES                      NO
+    │                       │
+    ▼                       ▼
+[ Approved for Merge ]    [ Block Pipeline & Alert ]
 
-### Manual Hardening Logs
+```
 
-Initial hardening steps were documented in the Hobgoblin lab, providing a reproducible baseline for OS security and SSH access controls that were later transferred to AWS.
+---
 
-### Container and Supply Chain
+## Quick start (validate only)
 
-- Scan OCI images with **Trivy** in CI
-- Use **IRSA** so workloads get least-privilege AWS access
-- Prevent unmanaged node IAM usage for application pods
+Prereqs: `terraform >= 1.5`, AWS CLI v2 (configured), `kubectl >= 1.28`.
 
-### Network and Data Protection
+```bash
+git clone https://github.com/Jira-saki/AWS-EKS-Hardened-infrastructure.git
+cd AWS-EKS-Hardened-infrastructure/terraform/environments/aws-eks
+terraform fmt -check
+terraform init
+terraform validate
+terraform plan -out=tfplan
+```
 
-- Deploy a **3-tier VPC:** public web, private EKS, data subnet
-- Protect ingress with **AWS WAF** and **ALB**
-- Use **S3 Gateway Endpoints** and strict VPC endpoint policies
+Deploy (review plan before apply):
 
-## 📊 Observability and Detection
+```bash
+terraform apply tfplan
+```
 
-| Component | Purpose |
-| :--- | :--- |
-| **Fluent Bit** | App and system log forwarding to CloudWatch |
-| **Amazon OpenSearch** | Search and analytics for security events |
-| **AWS GuardDuty** | Continuous threat detection |
-| **AWS Security Hub** | Compliance posture and alerts |
-| **IAM Access Analyzer** | Resource exposure analysis |
+Verify cluster:
 
-## 🛠️ Tech Stack (Hybrid Blueprint)
+```bash
+aws eks update-kubeconfig --region ap-northeast-1 --name ep2-hardened-eks
+kubectl get nodes -o wide
+```
 
-### 💻 Phase 1: Local Sandbox (Hobgoblin Lab)
-- **Virtualization & Hypervisor:** KVM / QEMU, Libvirt API
-- **Infrastructure as Code (IaC):** Terraform (`dmacvicar/libvirt` provider)
-- **OS Hardening & Bootstrapping:** Cloud-init (YAML declarations)
-- **Local Security Auditing:** Trivy (Local config manifest parsing)
-- **Host Environment:** Ubuntu 22.04.5 LTS (ThinkPad L15 i7, 64GB RAM)
+Teardown:
 
-### ☁️ Phase 2: AWS Cloud Target Architecture
-- **Compute Platform:** AWS EKS w/ Managed Node Groups (Bottlerocket OS)
-- **Networking & Data Perimeter:** AWS VPC (3-Tier Multi-AZ), ALB, S3 Gateway Endpoints
-- **Security & Threat Detection:** AWS WAFv2, AWS KMS, AWS GuardDuty (EKS Protection), AWS Security Hub, IAM Access Analyzer
-- **Shift-Left Security Automation:** Trivy (Container Image Scan), Checkov (IaC Static Analysis)
-- **Observability & SIEM Pipeline:** Fluent Bit, Amazon CloudWatch, Amazon OpenSearch SIEM
-- **CI/CD Pipeline:** GitHub Actions
+```bash
+terraform destroy -auto-approve
+```
 
-## Prerequisites
+---
 
-- Terraform `>= 1.x`
-- AWS CLI configured with permissions for networking, EKS, IAM, and monitoring
-- `kubectl` installed
-- Phase 1 requires a local KVM/QEMU environment.
+## Scope & MVP status
 
-## Notes
+### In-scope (v1.0.0-production-baseline)
 
-This README is focused on architecture and project structure. Detailed deployment commands and module usage will be added as Terraform work progresses.
+- 3-tier VPC with Multi-AZ NAT
+- Hardened EKS cluster with private API
+- AWS KMS CMKs for secrets and EBS
+- IRSA (OIDC) integration
+- Bottlerocket immutable node groups
+- GitHub Actions pipeline (Checkov + Trivy)
+
+### Deferred (Target for EP3 Data Platform)
+
+- Service Mesh (Istio / Linkerd)
+- Full Observability Stack (Prometheus / Grafana)
+- Modern Data Ingestion & Orchestration (`dlt`, Prefect Cloud Agent on EKS)
+- Distributed Data Processing (Apache Spark Operators)
+- Centralized Audit Logging & SIEM Forwarding (Fluent Bit to Amazon OpenSearch)
+
+---
+
+## Next steps (action items)
+
+1. Create AWS environment scaffolding:
+
+```bash
+mkdir -p terraform/environments/aws-eks
+mkdir -p terraform/modules/kms
+```
+
+2. Clean root directory (archive/remove temporary notes):
+
+```bash
+rm -f ULTIMATE_MASTER_CODE.txt memo.md
+```
+
+3. Commit and tag release:
+
+```bash
+git add .
+git commit -m "docs: finalize EP2 README with structured markdown and baseline"
+git tag -a v1.0.0-production-baseline -m "EP2 MVP Production Baseline Freeze"
+git push origin main --tags
+```
+
+---
+
+## Next steps (action items)
+
+1. Create AWS environment scaffolding:
+
+```bash
+mkdir -p terraform/environments/aws-eks
+mkdir -p terraform/modules/kms
