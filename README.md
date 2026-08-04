@@ -6,22 +6,6 @@
 > - **Current Focus:** Transitioning into **AWS Certified Data Engineer – Associate (DEA)** & **AWS Certified Machine Learning (MLA)** Implementation Phase.
 > - **Platform Target:** Evolving into a **Secured MLOps & Inference Platform PoC** focusing on zero-trust data access, read-only Bottlerocket nodes, and inference audit logging.
 
-## Summary
-![CI/CD](https://img.shields.io/github/actions/workflow/status/Jira-saki/AWS-EKS-Hardened-infrastructure/ci.yml?label=CI%2FCD&logo=githubactions)
-![Release](https://img.shields.io/badge/Release-v1.0.0--production--baseline-success?logo=git)
-![Terraform](https://img.shields.io/badge/Terraform-1.x-7B42BC?logo=terraform)
-![AWS EKS](https://img.shields.io/badge/AWS-EKS-FF9900?logo=amazonaws)
-![CKA](https://img.shields.io/badge/Kubernetes-CKA%20Certified-326CE5?logo=kubernetes&logoColor=white)
-
-# AWS EKS Hardened Infrastructure (EP2)
-
-> Professional Roadmap & Platform Strategy
->
-> - CKA certified (2026)
-> - Baseline: `v1.0.0-production-baseline` (Bottlerocket OS, IRSA)
-> - Next steps: AWS DEA-C01, MLA-C01
-> - Future: Secured MLOps & inference PoC (zero-trust data, private vector DBs, audit-logged pipelines)
-
 ---
 
 ## Executive summary
