@@ -1,4 +1,4 @@
-![CI/CD](https://img.shields.io/github/actions/workflow/status/Jira-saki/AWS-EKS-Hardened-infrastructure/ci.yml?label=CI%2FCD&logo=githubactions) ![Terraform](https://img.shields.io/badge/Terraform-1.x-7B42BC?logo=terraform) ![AWS EKS](https://img.shields.io/badge/AWS-EKS-FF9900?logo=amazonaws) ![CKA](https://img.shields.io/badge/Kubernetes-CKA%20Certified-326CE5?logo=kubernetes&logoColor=white)
+![Terraform](https://img.shields.io/badge/Terraform-1.x-7B42BC?logo=terraform) ![AWS EKS](https://img.shields.io/badge/AWS-EKS-FF9900?logo=amazonaws) ![CKA](https://img.shields.io/badge/Kubernetes-CKA%20Certified-326CE5?logo=kubernetes&logoColor=white)
 
 # AWS EKS Hardened Infrastructure (EP2)
 > 🎯 **Professional Roadmap & Certification Alignment**
