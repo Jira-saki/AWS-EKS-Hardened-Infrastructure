@@ -6,7 +6,7 @@ module "network" {
 
 module "compute" {
   source          = "../../modules/compute"
-  pool_name = libvirt_pool.ep2_pool.name
+  pool_name       = libvirt_pool.ep2_pool.name
   dmz_net_id      = module.network.dmz_net_id
   isolated_net_id = module.network.isolated_net_id
 }
