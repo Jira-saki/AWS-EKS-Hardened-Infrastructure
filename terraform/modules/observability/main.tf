@@ -12,13 +12,23 @@ resource "aws_security_group" "opensearch_sg" {
   }
 }
 
+resource "aws_kms_key" "opensearch" {
+  description             = "KMS key for OpenSearch encryption at rest"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+
+  tags = {
+    Name = "${var.domain_name}-kms"
+  }
+}
+
 resource "aws_opensearch_domain" "siem" {
   #checkov:skip=CKV_AWS_318: "Single node deployment used for lab environment cost control"
   #checkov:skip=CKV2_AWS_59: "Dedicated master nodes skipped for single-node lab cluster"
   #checkov:skip=CKV2_AWS_52: "Fine-grained access control managed via IAM access policies in lab"
   #checkov:skip=CKV_AWS_317: "Audit logging disabled in lab to reduce CloudWatch costs"
   #checkov:skip=CKV_AWS_84: "Search/Application logging disabled in lab to reduce CloudWatch costs"
-  
+
   domain_name    = var.domain_name
   engine_version = "OpenSearch_2.11"
 
@@ -40,7 +50,7 @@ resource "aws_opensearch_domain" "siem" {
   }
 
   encrypt_at_rest {
-    enabled = true
+    enabled    = true
     kms_key_id = aws_kms_key.opensearch.arn
   }
 

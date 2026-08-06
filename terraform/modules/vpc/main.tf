@@ -9,6 +9,25 @@ resource "aws_vpc" "this" {
   }
 }
 
+resource "aws_iam_role_policy" "vpc_flow_logs" {
+  name = "vpc-flow-logs-policy-${var.cluster_name}"
+  role = aws_iam_role.vpc_flow_logs.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "logs:DescribeLogGroups",
+        "logs:DescribeLogStreams"
+      ]
+      Effect   = "Allow"
+      Resource = "*"
+    }]
+  })
+}
+
 resource "aws_internet_gateway" "this" {
   vpc_id = aws_vpc.this.id
 
@@ -22,6 +41,8 @@ resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.this.id
   cidr_block              = var.public_subnet_cidrs[count.index]
   availability_zone       = var.availability_zones[count.index]
+  
+  #checkov:skip=CKV_AWS_130: "Public subnets require auto-assign public IP for ALB interfaces"
   map_public_ip_on_launch = true
 
   tags = {
@@ -162,19 +183,3 @@ resource "aws_default_security_group" "default" {
   # ละการใส่ ingress และ egress เพื่อบล็อกทุกอย่างใน default SG
 }
 
-# 3. แก้ไข CKV_AWS_130: ข้ามกรณี Public Subnet auto-assign IP (สำหรับ Public ALB)
-resource "aws_subnet" "public" {
-  count                   = length(var.availability_zones)
-  vpc_id                  = aws_vpc.this.id
-  cidr_block              = var.public_subnet_cidrs[count.index]
-  availability_zone       = var.availability_zones[count.index]
-  
-  #checkov:skip=CKV_AWS_130: "Public subnets require auto-assign public IP for ALB interfaces"
-  map_public_ip_on_launch = true
-
-  tags = {
-    Name                        = "public-subnet-${var.availability_zones[count.index]}"
-    "kubernetes.io/role/elb"    = "1"
-    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
-  }
-}

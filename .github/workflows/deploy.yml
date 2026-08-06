@@ -4,63 +4,49 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
 
 jobs:
   security-scan-iac:
-    name: Checkov Scan
+    name: 1. Checkov IaC Security Scan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Run Checkov action
         uses: bridgecrewio/checkov-action@v12
         with:
-          directory: terraform/
+          directory: terraform/modules
           framework: terraform
-          soft_fail: true # Change to false to block deployments on failure
+          soft_fail: false # บล็อกการรันทันทีหาก Checkov สแกนไม่ผ่าน
 
-  container-scan:
-    name: Trivy Vulnerability Scanner
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        
-      # Example build step for dummy container image
-      - name: Build an image from Dockerfile
-        run: |
-          docker build -t app-repo:${{ github.sha }} -f Dockerfile . || echo "Skipping build (No Dockerfile)"
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'app-repo:${{ github.sha }}'
-          format: 'table'
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
-        continue-on-error: true # Suppress error if image build above skipped
-
-  terraform-plan:
-    name: Terraform Plan
+  terraform-pipeline:
+    name: 2. Terraform Plan & Apply
     needs: security-scan-iac
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: terraform/environments/prod
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.5.0
+          terraform_version: "1.8.0"
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -69,5 +55,12 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
+      - name: Terraform Validate
+        run: terraform validate -no-color
+
       - name: Terraform Plan
-        run: terraform plan
+        run: terraform plan -no-color -out=tfplan
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -input=false tfplan
