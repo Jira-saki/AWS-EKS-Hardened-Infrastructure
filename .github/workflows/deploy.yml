@@ -1,43 +1,17 @@
-name: Deploy EKS Infrastructure
+name: DevSecOps Infrastructure Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
-
-permissions:
-  id-token: write
-  contents: read
-  pull-requests: write
+    branches: [ main ]
 
 jobs:
-  security-scan-iac:
-    name: 1. Checkov IaC Security Scan
+  validate-and-scan:
+    name: 1. IaC Linting & Security Scan (Offline Quality Gate)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Checkov action
-        uses: bridgecrewio/checkov-action@v12
-        with:
-          directory: terraform/modules
-          framework: terraform
-          soft_fail: false # บล็อกการรันทันทีหาก Checkov สแกนไม่ผ่าน
-
-  terraform-pipeline:
-    name: 2. Terraform Plan & Apply
-    needs: security-scan-iac
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: terraform/environments/prod
-
-    steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Setup Terraform
@@ -45,22 +19,27 @@ jobs:
         with:
           terraform_version: "1.8.0"
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Init & Validate (Offline)
+        run: |
+          cd terraform/environments/prod
+          terraform init -backend=false
+          terraform validate
+
+      - name: Run Checkov IaC Security Scan
+        uses: bridgecrewio/checkov-action@v12
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-northeast-1
+          directory: terraform/
+          framework: terraform
+          soft_fail: false
 
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Validate
-        run: terraform validate -no-color
-
-      - name: Terraform Plan
-        run: terraform plan -no-color -out=tfplan
-
-      - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -input=false tfplan
+      - name: Run Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          hide-progress: true
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
