@@ -1,6 +1,10 @@
-![Terraform](https://img.shields.io/badge/Terraform-1.x-7B42BC?logo=terraform) ![AWS EKS](https://img.shields.io/badge/AWS-EKS-FF9900?logo=amazonaws) ![CKA](https://img.shields.io/badge/Kubernetes-CKA%20Certified-326CE5?logo=kubernetes&logoColor=white)
+![Build Status](https://github.com/Jira-saki/AWS-EKS-Hardened-Infrastructure/workflows/DevSecOps%20Infrastructure%20Pipeline/badge.svg)
+![Terraform](https://img.shields.io/badge/Terraform-1.x-7B42BC?logo=terraform)
+![AWS EKS](https://img.shields.io/badge/AWS-EKS-FF9900?logo=amazonaws)
+![CKA](https://img.shields.io/badge/Kubernetes-CKA%20Certified-326CE5?logo=kubernetes&logoColor=white)
 
 # AWS EKS Hardened Infrastructure (EP2)
+
 > 🎯 **Professional Roadmap & Certification Alignment**
 > - **Completed Milestone:** ✅ **CKA (Certified Kubernetes Administrator)** ➔ Certified (2026)
 > - **Current Focus:** Transitioning into **AWS Certified Data Engineer – Associate (DEA)** & **AWS Certified Machine Learning (MLA)** Implementation Phase.
@@ -8,7 +12,7 @@
 
 ---
 
-## Executive summary
+## Executive Summary
 
 This repository contains a hardened, zero-trust AWS EKS baseline implemented with Terraform and validated through automated CI/CD security gates.
 
@@ -16,22 +20,22 @@ This repository contains a hardened, zero-trust AWS EKS baseline implemented wit
 - Uses Bottlerocket managed node groups for immutable hosts
 - Enforces least-privilege via OIDC + IRSA
 - Uses AWS KMS CMKs for envelope encryption
-- CI gates: Terraform validate, Checkov (IaC), Trivy (images)
+- CI gates: Terraform validate, Checkov (IaC), Trivy (images/config)
 
 ---
 
-## Hybrid development strategy
+## Hybrid Development Strategy
 
 Two-phase validation to reduce risk and cost:
 
-1. Local sandbox ("Hobgoblin"): KVM/QEMU lab for OS hardening and cloud-init validation.
-2. AWS target: translate validated baselines into an AWS EKS architecture (Bottlerocket, KMS, IRSA).
+1. **Local sandbox ("Hobgoblin"):** KVM/QEMU lab for OS hardening and cloud-init validation.
+2. **AWS target:** Translate validated baselines into an AWS EKS architecture (Bottlerocket, KMS, IRSA).
 
 ![Hobgoblin Local Hypervisor Topology](assets/hob-lab2.png)
 
 ---
 
-## AWS target architecture & security pillars
+## AWS Target Architecture & Security Pillars
 
 - 3-tier network segmentation (public ALB/WAF, private application subnets, isolated data subnets)
 - Private EKS control plane (API endpoint = Private Only)
@@ -43,34 +47,35 @@ Two-phase validation to reduce risk and cost:
 
 ---
 
-## Security control matrix
+## Security Control Matrix
 
-| Domain | Implemented control | Threats addressed | Verification |
+| Domain | Implemented Control | Threats Addressed | Verification |
 |---|---|---|---|
-| Network perimeter | 3-tier VPC + private API endpoint | Unauthorized control-plane access | Terraform spec / AWS CLI |
+| Network Perimeter | 3-tier VPC + private API endpoint | Unauthorized control-plane access | Terraform spec / AWS CLI |
 | Compute | Bottlerocket OS (read-only root) | Host compromise, container escape | CIS benchmarks / node spec |
-| Identity & access | IRSA (IAM roles for service accounts) | Credential leakage, over-privilege | IAM policy audit / OIDC |
-| Data protection | AWS KMS CMKs (envelope encryption) | Unencrypted secrets & volumes | KMS policy inspection |
-| Supply chain | Checkov (IaC) + Trivy (images) | Misconfigs, vulnerable dependencies | GitHub Actions pipeline |
+| Identity & Access | IRSA (IAM roles for service accounts) | Credential leakage, over-privilege | IAM policy audit / OIDC |
+| Data Protection | AWS KMS CMKs (envelope encryption) | Unencrypted secrets & volumes | KMS policy inspection |
+| Supply Chain | Checkov (IaC) + Trivy (config) | Misconfigs, vulnerable dependencies | GitHub Actions pipeline |
 
 ---
 
-## Project structure (high level)
+## Project Structure
 
 ```text
 .
-├── .github/workflows/      # CI: terraform validate, Checkov, Trivy
+├── .github/workflows/      # CI: Terraform validate, Checkov, Trivy
+├── cloud-init/             # Local sandbox manifests
+├── kubernetes/             # Base manifests (ingress, karpenter, observability)
 ├── terraform/
-│   ├── environments/       # local-hob, aws-eks
-│   └── modules/            # network, compute, storage, kms
-├── cloud-init/             # local sandbox manifests
-├── assets/                 # diagrams and topology images
+│   ├── environments/       # local-hob, prod
+│   └── modules/            # compute, ecr, eks, network, observability, security, storage, vpc
+├── assets/                 # Diagrams and topology images
 └── README.md
 ```
 
 ---
 
-## DevSecOps CI/CD (what runs on PRs)
+## DevSecOps CI/CD Pipeline
 
 ```text
 [ Git Push / PR ]
@@ -93,27 +98,26 @@ Two-phase validation to reduce risk and cost:
     │                       │
     ▼                       ▼
 [ Approved for Merge ]    [ Block Pipeline & Alert ]
-
 ```
 
 ---
 
-## Quick start (validate only)
+## Quick Start (Validate Only)
 
-Prereqs: `terraform >= 1.5`, AWS CLI v2 (configured), `kubectl >= 1.28`.
+**Prerequisites:** `terraform >= 1.5`, AWS CLI v2 (configured), `kubectl >= 1.28`.
 
 ```bash
 git clone https://github.com/Jira-saki/AWS-EKS-Hardened-infrastructure.git
-cd AWS-EKS-Hardened-infrastructure/terraform/environments/aws-eks
+cd AWS-EKS-Hardened-infrastructure/terraform/environments/prod
 terraform fmt -check
-terraform init
+terraform init -backend=false
 terraform validate
-terraform plan -out=tfplan
 ```
 
 Deploy (review plan before apply):
 
 ```bash
+terraform plan -out=tfplan
 terraform apply tfplan
 ```
 
@@ -132,9 +136,9 @@ terraform destroy -auto-approve
 
 ---
 
-## Scope & MVP status
+## Scope & MVP Status
 
-### In-scope (v1.0.0-production-baseline)
+### In-Scope (v1.0.0-production-baseline)
 
 - 3-tier VPC with Multi-AZ NAT
 - Hardened EKS cluster with private API
@@ -153,36 +157,13 @@ terraform destroy -auto-approve
 
 ---
 
-## Next steps (action items)
+## Release & Tagging
 
-1. Create AWS environment scaffolding:
-
-```bash
-mkdir -p terraform/environments/aws-eks
-mkdir -p terraform/modules/kms
-```
-
-2. Clean root directory (archive/remove temporary notes):
+To tag and freeze this production baseline:
 
 ```bash
-rm -f ULTIMATE_MASTER_CODE.txt memo.md
-```
-
-3. Commit and tag release:
-
-```bash
-git add .
-git commit -m "docs: finalize EP2 README with structured markdown and baseline"
+git add README.md
+git commit -m "docs: finalize EP2 README with aligned directory structure"
 git tag -a v1.0.0-production-baseline -m "EP2 MVP Production Baseline Freeze"
 git push origin main --tags
 ```
-
----
-
-## Next steps (action items)
-
-1. Create AWS environment scaffolding:
-
-```bash
-mkdir -p terraform/environments/aws-eks
-mkdir -p terraform/modules/kms
