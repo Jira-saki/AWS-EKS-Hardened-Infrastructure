@@ -12,13 +12,13 @@ terraform {
 # 1. DMZ Network (เน็ตขาเข้า/Public Zone)
 resource "libvirt_network" "dmz_net" {
   name      = "dmz-net"
-  mode      = "nat"          # ให้ออกเน็ตได้ผ่าน Host
+  mode      = "nat" # ให้ออกเน็ตได้ผ่าน Host
   domain    = "dmz.local"
   addresses = ["192.168.150.0/24"]
 
   dns {
     enabled    = true
-    local_only = false      # ยอมให้ Resolve DNS จากข้างนอกได้
+    local_only = false # ยอมให้ Resolve DNS จากข้างนอกได้
   }
   autostart = true
 }
@@ -26,13 +26,13 @@ resource "libvirt_network" "dmz_net" {
 # 2. Isolated Network (เน็ตขาใน/Private Zone)
 resource "libvirt_network" "isolated_net" {
   name      = "isolated-net"
-  mode      = "none"         # Isolated: ปิดตาย ไม่มีการ Route ออกข้างนอก
+  mode      = "none" # Isolated: ปิดตาย ไม่มีการ Route ออกข้างนอก
   domain    = "isolated.local"
   addresses = ["192.168.200.0/24"]
 
   dns {
     enabled    = true
-    local_only = true       # Resolve เฉพาะภายในโซนนี้เท่านั้น
+    local_only = true # Resolve เฉพาะภายในโซนนี้เท่านั้น
   }
   autostart = true
 }

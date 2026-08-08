@@ -24,7 +24,7 @@ resource "libvirt_volume" "ep2_master_disk" {
   name           = "ep2_master_root.qcow2"
   pool           = var.pool_name
   base_volume_id = libvirt_volume.ep2_ubuntu_base.id
-  size           = 21474836480 
+  size           = 21474836480
   format         = "qcow2"
 }
 
@@ -33,7 +33,7 @@ resource "libvirt_volume" "ep2_bastion_disk" {
   name           = "ep2_bastion_root.qcow2"
   pool           = var.pool_name
   base_volume_id = libvirt_volume.ep2_ubuntu_base.id
-  size           = 10737418240 
+  size           = 10737418240
   format         = "qcow2"
 }
 
@@ -42,8 +42,8 @@ resource "libvirt_volume" "ep2_bastion_disk" {
 # =================================================================
 # แยกไฟล์ ISO ของ Bastion
 resource "libvirt_cloudinit_disk" "bastion_init" {
-  name      = "ep2-bastion-init.iso"
-  pool      = var.pool_name
+  name = "ep2-bastion-init.iso"
+  pool = var.pool_name
   user_data = templatefile("${path.module}/../../../cloud-init/bastion.cfg", {
     ssh_key = file(pathexpand(var.ssh_pub_key_path))
   })
@@ -51,8 +51,8 @@ resource "libvirt_cloudinit_disk" "bastion_init" {
 
 # แยกไฟล์ ISO ของ Master
 resource "libvirt_cloudinit_disk" "master_init" {
-  name      = "ep2-master-init.iso"
-  pool      = var.pool_name
+  name = "ep2-master-init.iso"
+  pool = var.pool_name
   user_data = templatefile("${path.module}/../../../cloud-init/k8s-control-plane.cfg", {
     ssh_key = file(pathexpand(var.ssh_pub_key_path))
   })
@@ -68,10 +68,10 @@ resource "libvirt_domain" "ep2_master" {
   memory = "4096"
   vcpu   = 2
 
-  cloudinit = libvirt_cloudinit_disk.master_init.id 
+  cloudinit = libvirt_cloudinit_disk.master_init.id
 
   network_interface {
-    network_id = var.isolated_net_id 
+    network_id = var.isolated_net_id
   }
 
   disk {
@@ -91,10 +91,10 @@ resource "libvirt_domain" "ep2_bastion" {
   memory = "1024"
   vcpu   = 1
 
-  cloudinit = libvirt_cloudinit_disk.bastion_init.id 
+  cloudinit = libvirt_cloudinit_disk.bastion_init.id
 
   network_interface {
-    network_id = var.dmz_net_id 
+    network_id = var.dmz_net_id
   }
 
   network_interface {

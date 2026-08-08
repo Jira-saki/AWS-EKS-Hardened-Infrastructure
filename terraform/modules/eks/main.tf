@@ -6,7 +6,7 @@ module "eks" {
   cluster_name    = var.cluster_name
   cluster_version = var.cluster_version
 
-  cluster_endpoint_public_access = false
+  cluster_endpoint_public_access  = false
   cluster_endpoint_private_access = true
 
   vpc_id                   = var.vpc_id
@@ -147,6 +147,6 @@ resource "helm_release" "aws_load_balancer_controller" {
     name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
     value = module.aws_load_balancer_controller_irsa_role.iam_role_arn
   }
-  
+
   depends_on = [module.eks]
 }

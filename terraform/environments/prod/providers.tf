@@ -1,6 +1,6 @@
 terraform {
   required_version = ">= 1.5.0"
-  
+
   backend "s3" {
     bucket         = "eks-hardened-infra-tfstate-ap-northeast-1"
     key            = "prod/terraform.tfstate"

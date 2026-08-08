@@ -13,6 +13,6 @@ variable "pool_name" {
 }
 
 variable "ssh_pub_key_path" {
-  type = string
+  type    = string
   default = "~/.ssh/id_rsa.pub"
 }

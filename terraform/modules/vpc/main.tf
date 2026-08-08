@@ -39,11 +39,11 @@ resource "aws_internet_gateway" "this" {
 }
 
 resource "aws_subnet" "public" {
-  count                   = length(var.availability_zones)
-  vpc_id                  = aws_vpc.this.id
-  cidr_block              = var.public_subnet_cidrs[count.index]
-  availability_zone       = var.availability_zones[count.index]
-  
+  count             = length(var.availability_zones)
+  vpc_id            = aws_vpc.this.id
+  cidr_block        = var.public_subnet_cidrs[count.index]
+  availability_zone = var.availability_zones[count.index]
+
   #checkov:skip=CKV_AWS_130: "Public subnets require auto-assign public IP for ALB interfaces"
   map_public_ip_on_launch = true
 
@@ -152,7 +152,7 @@ resource "aws_route_table_association" "data" {
 
 # 1. แก้ไข CKV2_AWS_11: เพิ่ม VPC Flow Logs ลง CloudWatch
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
-  name              = "/aws/vpc/flow-logs-${var.cluster_name}"
+  name = "/aws/vpc/flow-logs-${var.cluster_name}"
   #checkov:skip=CKV_AWS_338: "30-day retention selected for lab cost optimization"
   retention_in_days = 30
 

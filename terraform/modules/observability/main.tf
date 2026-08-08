@@ -94,12 +94,12 @@ resource "aws_opensearch_domain" "siem" {
   access_policies = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Action    = "es:*"
+      Action = "es:*"
       Principal = {
         AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
       }
-      Effect    = "Allow"
-      Resource  = "arn:aws:es:*:*:domain/${var.domain_name}/*"
+      Effect   = "Allow"
+      Resource = "arn:aws:es:*:*:domain/${var.domain_name}/*"
     }]
   })
 }
