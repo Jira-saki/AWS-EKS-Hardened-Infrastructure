@@ -45,6 +45,7 @@ resource "aws_subnet" "public" {
   availability_zone = var.availability_zones[count.index]
 
   #checkov:skip=CKV_AWS_130: "Public subnets require auto-assign public IP for ALB interfaces"
+  #trivy:ignore:AWS-0164
   map_public_ip_on_launch = true
 
   tags = {

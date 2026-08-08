@@ -35,8 +35,6 @@ metadata:
   namespace: kube-system
   labels:
     k8s-app: fluent-bit-logging
-    version: v1
-    kubernetes.io/cluster-service: "true"
 spec:
   selector:
     matchLabels:
@@ -45,22 +43,22 @@ spec:
     metadata:
       labels:
         k8s-app: fluent-bit-logging
-        version: v1
-        kubernetes.io/cluster-service: "true"
     spec:
+      # เพิ่ม Pod Security Context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
       containers:
-      - name: fluent-bit
-        image: amazon/aws-for-fluent-bit:latest
-        env:
-          - name: AWS_REGION
-            value: "ap-northeast-1"
-          - name: HOST_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: spec.nodeName
-        resources:
-          limits:
-            memory: 200Mi
-          requests:
-            cpu: 500m
-            memory: 100Mi
+        - name: fluent-bit
+          image: amazon/aws-for-fluent-bit:latest
+          # เพิ่ม Container Security Context
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: AWS_REGION
+              value: "ap-northeast-1"
