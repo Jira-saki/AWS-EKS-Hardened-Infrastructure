@@ -1,0 +1,2 @@
+# Ignore rule AWS-0104 from upstream AWS EKS official module
+AWS-0104
