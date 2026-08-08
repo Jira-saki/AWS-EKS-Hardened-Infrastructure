@@ -35,6 +35,9 @@ jobs:
           framework: terraform
           soft_fail: false
 
+      - name: Clean up .terraform cache before Trivy scan
+        run: find . -type d -name ".terraform" -exec rm -rf {} +
+
       - name: Run Trivy Vulnerability Scanner
         uses: aquasecurity/trivy-action@master
         with:
