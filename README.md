@@ -8,10 +8,12 @@
 
 # AWS EKS Hardened Infrastructure
 
-> 🎯 **Professional Roadmap & Certification Alignment**
-> - **Completed Milestone:** ✅ **CKA (Certified Kubernetes Administrator)** — Certified (2026)
-> - **Platform Status:** Production-baseline frozen. Full-stack observability (Prometheus + Grafana + k6) validated in Phase 6.
-> - **Next Phase:** Evolving into a **Secured MLOps & Inference Platform** targeting **AWS Certified Data Engineer – Associate (DEA)** and **AWS Certified Machine Learning – Associate (MLA)** certification alignment.
+🎯 Professional Roadmap & Certification Alignment
+Completed Milestones: 
+- ✅ CKA (Certified Kubernetes Administrator) — Certified (2026)
+- 🎯 PCA (Prometheus Certified Associate) — Full-stack Observability & CRDs validated in Phase 6
+Target Alignment:
+- 🔒 CKS (Certified Kubernetes Security Specialist) — Runtime hardening, Kyverno admission, & Bottlerocket immutability
 
 ---
 
