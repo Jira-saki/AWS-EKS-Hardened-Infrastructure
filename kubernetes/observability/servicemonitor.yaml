@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: secure-api-monitor
+  namespace: default
+  labels:
+    release: monitoring-stack
+spec:
+  selector:
+    matchLabels:
+      app: secure-api
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: "(python_|process_virtual_memory_).*"
+          action: drop

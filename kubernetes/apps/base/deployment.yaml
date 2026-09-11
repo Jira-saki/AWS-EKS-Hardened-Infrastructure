@@ -20,8 +20,40 @@ spec:
       terminationGracePeriodSeconds: 45
       containers:
         - name: secure-api
-          image: secure-api:v1.0.0
+          image: python:3.10-slim
           imagePullPolicy: IfNotPresent
+          workingDir: /app
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              mkdir -p /app && cd /app
+              pip install --no-cache-dir fastapi uvicorn prometheus-fastapi-instrumentator
+              cat << 'EOC' > /app/main.py
+              import time, math
+              from fastapi import FastAPI
+              from prometheus_fastapi_instrumentator import Instrumentator
+
+              app = FastAPI(title="Secure-API", version="1.0.0")
+              Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+
+              @app.get("/")
+              def root():
+                  return {"status": "healthy", "service": "secure-api"}
+
+              @app.get("/healthz")
+              def healthz():
+                  return {"status": "ok"}
+
+              @app.get("/cpu-burn")
+              def burn(duration: float = 0.05):
+                  start = time.time()
+                  while time.time() - start < duration:
+                      _ = math.sqrt(123456.789) * math.sin(9876.543)
+                  return {"status": "burned", "duration": duration}
+              EOC
+              uvicorn main:app --host 0.0.0.0 --port 8000  
           env:
             - name: APP_VERSION
               value: "v1.0.0"
@@ -38,16 +70,19 @@ spec:
             limits:
               cpu: "200m"
               memory: "256Mi"
-          readinessProbe:
-            httpGet:
-              path: /healthz
-              port: 8000
-            initialDelaySeconds: 2
-            periodSeconds: 3
-            failureThreshold: 2
           livenessProbe:
             httpGet:
               path: /healthz
               port: 8000
-            initialDelaySeconds: 5
+            initialDelaySeconds: 30
             periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 2
