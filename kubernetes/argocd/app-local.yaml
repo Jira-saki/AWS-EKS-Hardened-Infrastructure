@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/Jira-saki/AWS-EKS-Hardened-Infrastructure.git'
+    repoURL: 'https://github.com/Jira-saki/Cloud-Native-Hardened-Infrastructure.git'
     targetRevision: main
     path: kubernetes/apps/overlays/local
   destination:

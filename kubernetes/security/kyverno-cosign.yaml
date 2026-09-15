@@ -24,4 +24,4 @@ spec:
             - entries:
                 - keyless:
                     issuer: "https://token.actions.githubusercontent.com"
-                    subject: "https://github.com/Jira-saki/AWS-EKS-Hardened-Infrastructure/.github/workflows/ci-devsecops.yml@refs/heads/main"
+                    subject: "https://github.com/Jira-saki/Cloud-Native-Hardened-Infrastructure/.github/workflows/ci-devsecops.yml@refs/heads/main"

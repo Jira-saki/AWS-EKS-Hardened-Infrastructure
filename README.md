@@ -1,4 +1,4 @@
-![Build Status](https://github.com/Jira-saki/AWS-EKS-Hardened-Infrastructure/workflows/DevSecOps%20Infrastructure%20Pipeline/badge.svg)
+![Build Status](https://github.com/Jira-saki/Cloud-Native-Hardened-Infrastructure/workflows/DevSecOps%20Infrastructure%20Pipeline/badge.svg)
 ![Terraform](https://img.shields.io/badge/Terraform-1.x-7B42BC?logo=terraform)
 ![AWS EKS](https://img.shields.io/badge/AWS-EKS-FF9900?logo=amazonaws)
 ![GCP GKE](https://img.shields.io/badge/GCP-GKE-4285F4?logo=googlecloud&logoColor=white)
@@ -303,7 +303,7 @@ spec:
             - entries:
                 - keyless:
                     issuer: "https://token.actions.githubusercontent.com"
-                    subject: "https://github.com/Jira-saki/AWS-EKS-Hardened-Infrastructure/.github/workflows/ci-devsecops.yml@refs/heads/main"
+                    subject: "https://github.com/Jira-saki/Cloud-Native-Hardened-Infrastructure/.github/workflows/ci-devsecops.yml@refs/heads/main"
 ```
 
 **Supply chain pipeline:**
@@ -361,7 +361,7 @@ spec:
 ## Repository Structure
 
 ```text
-Multi-Cloud-Hardened-Infrastructure/         (repo: AWS-EKS-Hardened-Infrastructure)
+Multi-Cloud-Hardened-Infrastructure/         (repo: Cloud-Native-Hardened-Infrastructure)
 |
 +-- .github/
 |   +-- workflows/
@@ -554,7 +554,7 @@ k6 run --env BASE_URL=http://$ALB_DNS tests/spike-test.js
 
 # 6. Verify Cosign supply chain
 cosign verify \
-  --certificate-identity "https://github.com/Jira-saki/AWS-EKS-Hardened-Infrastructure/.github/workflows/ci-devsecops.yml@refs/heads/main" \
+  --certificate-identity "https://github.com/Jira-saki/Cloud-Native-Hardened-Infrastructure/.github/workflows/ci-devsecops.yml@refs/heads/main" \
   --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
   <ACCOUNT_ID>.dkr.ecr.ap-northeast-1.amazonaws.com/secure-api:<TAG>
 ```

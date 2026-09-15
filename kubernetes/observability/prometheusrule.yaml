@@ -27,7 +27,7 @@ spec:
           annotations:
             summary: "secure-api service is down"
             description: "No available replicas or scrape endpoints found for secure-api in the cluster."
-            runbook_url: "https://github.com/Jira-saki/AWS-EKS-Hardened-Infrastructure#pillar-5--full-stack-observability--two-tier-autoscaling"
+            runbook_url: "https://github.com/Jira-saki/Cloud-Native-Hardened-Infrastructure#pillar-5--full-stack-observability--two-tier-autoscaling"
 
         - alert: SecureApiHigh5xxErrorRate
           expr: |
@@ -43,7 +43,7 @@ spec:
           annotations:
             summary: "High HTTP 5xx error rate on secure-api"
             description: "HTTP 5xx error rate exceeds 5% for more than 2 minutes (current: {{ $value | printf \"%.2f\" }}%)."
-            runbook_url: "https://github.com/Jira-saki/AWS-EKS-Hardened-Infrastructure#pillar-5--full-stack-observability--two-tier-autoscaling"
+            runbook_url: "https://github.com/Jira-saki/Cloud-Native-Hardened-Infrastructure#pillar-5--full-stack-observability--two-tier-autoscaling"
 
         - alert: SecureApiHighLatencyP95
           expr: |
@@ -55,7 +55,7 @@ spec:
           annotations:
             summary: "High p95 response latency on secure-api"
             description: "p95 latency is greater than 1.0s for more than 5 minutes (current: {{ $value | printf \"%.2f\" }}s)."
-            runbook_url: "https://github.com/Jira-saki/AWS-EKS-Hardened-Infrastructure#pillar-5--full-stack-observability--two-tier-autoscaling"
+            runbook_url: "https://github.com/Jira-saki/Cloud-Native-Hardened-Infrastructure#pillar-5--full-stack-observability--two-tier-autoscaling"
 
         - alert: SecureApiPodCrashLooping
           expr: rate(kube_pod_container_status_restarts_total{container="secure-api"}[15m]) * 60 > 0.2
@@ -66,7 +66,7 @@ spec:
           annotations:
             summary: "secure-api pod is restarting frequently"
             description: "Container {{ $labels.container }} in pod {{ $labels.pod }} has restarted frequently in the last 15 minutes."
-            runbook_url: "https://github.com/Jira-saki/AWS-EKS-Hardened-Infrastructure#pillar-5--full-stack-observability--two-tier-autoscaling"
+            runbook_url: "https://github.com/Jira-saki/Cloud-Native-Hardened-Infrastructure#pillar-5--full-stack-observability--two-tier-autoscaling"
 
         - alert: SecureApiHighCpuUsage
           expr: |
@@ -82,4 +82,4 @@ spec:
           annotations:
             summary: "secure-api container CPU near saturation"
             description: "Pod {{ $labels.pod }} CPU usage is above 85% of limit for more than 5 minutes (current: {{ $value | printf \"%.2f\" }}%). Check HPA and Karpenter autoscaling status."
-            runbook_url: "https://github.com/Jira-saki/AWS-EKS-Hardened-Infrastructure#pillar-5--full-stack-observability--two-tier-autoscaling"
+            runbook_url: "https://github.com/Jira-saki/Cloud-Native-Hardened-Infrastructure#pillar-5--full-stack-observability--two-tier-autoscaling"
