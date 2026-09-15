@@ -1,0 +1,53 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: secure-api-alert-routing
+  namespace: default
+  labels:
+    release: monitoring
+spec:
+  route:
+    # 1. Root Grouping & Throttling
+    groupBy: ['alertname', 'namespace', 'service']
+    groupWait: 30s        # รอรวม Alert ในกลุ่มเดียวกันก่อนส่งรอบแรก
+    groupInterval: 5m     # ระยะห่างในการส่ง batch ใหม่หากมี alert เพิ่มในกลุ่มเดิม
+    repeatInterval: 4h    # ส่งแจ้งเตือนซ้ำกรณีปัญหายังไม่ถูก Resolve
+    receiver: 'blackhole-null'
+    routes:
+      # Route Tier 1: Critical (On-Call / Instant Paging)
+      - matchers:
+          - name: severity
+            value: critical
+        receiver: 'pager-duty-or-webhook'
+        continue: false
+
+      # Route Tier 2: Warning (ChatOps / Daily Operations)
+      - matchers:
+          - name: severity
+            value: warning
+        receiver: 'slack-warning-channel'
+        continue: false
+
+  # 2. Inhibition Rules: ระงับ Warning ทันทีหาก Critical กำลัง Firing
+  inhibitRules:
+    - targetMatch:
+        - name: severity
+          value: warning
+      sourceMatch:
+        - name: alertname
+          value: SecureApiDown
+      equal: ['namespace', 'service']
+
+  # 3. Notification Sinks
+  receivers:
+    - name: 'blackhole-null'
+
+    - name: 'pager-duty-or-webhook'
+      webhookConfigs:
+        - url: 'http://alertmanager-webhook-receiver.monitoring.svc.cluster.local:5001/critical'
+          sendResolved: true
+
+    - name: 'slack-warning-channel'
+      webhookConfigs:
+        - url: 'http://alertmanager-webhook-receiver.monitoring.svc.cluster.local:5001/warning'
+          sendResolved: true

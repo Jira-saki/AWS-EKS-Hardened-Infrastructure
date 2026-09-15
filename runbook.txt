@@ -1,0 +1,172 @@
+================================================================================
+  RUNBOOK: AWS EKS Hardened Infrastructure - Deployment & Teardown
+  Step-by-Step Checklist with Evidence Capture (Proof-of-Work)
+================================================================================
+Last Updated : 2026-09-15
+Purpose      : Cloud Deployment Guide + Portfolio Evidence Collection
+
+
+================================================================================
+  Phase 1: Pre-Flight & Provisioning (Terraform)
+================================================================================
+
+[ ] 1.1  Verify AWS CLI Credentials and Context
+         $ aws sts get-caller-identity
+
+
+[ ] 1.2  Run Terraform to Provision Infrastructure
+         $ cd terraform
+         $ terraform init
+         $ terraform plan -out=tfplan
+         $ terraform apply tfplan
+
+
+[ ] SCREENSHOT #1 - Terraform Apply Complete
+         Capture terminal showing:
+           Apply complete! Resources: XX added, 0 changed, 0 destroyed.
+         And Outputs table showing:
+           cluster_endpoint, cluster_name, vpc_id
+
+
+================================================================================
+  Phase 2: Cluster Connectivity & Bottlerocket Nodes
+================================================================================
+
+[ ] 2.1  Update Kubeconfig
+         $ aws eks update-kubeconfig --region <your-region> --name <cluster-name>
+
+
+[ ] 2.2  Verify Control Plane and Nodes Status
+         $ kubectl get nodes -o wide
+
+
+[ ] SCREENSHOT #2 - Bottlerocket OS Verification
+         Capture output of `kubectl get nodes -o wide`
+         Highlight OS-IMAGE column showing "Bottlerocket OS"
+         All nodes must show status "Ready"
+
+
+================================================================================
+  Phase 3: Workload & AWS Load Balancer Controller (Prod Overlay)
+================================================================================
+
+[ ] 3.0  Verify AWS Load Balancer Controller is Running
+         $ kubectl get deployment -n kube-system aws-load-balancer-controller
+
+
+[ ] 3.1  Deploy Production Overlay via Kustomize
+         $ kubectl apply -k kubernetes/apps/overlays/prod/
+
+
+[ ] 3.2  Verify Pods, Services, and AWS ALB Ingress
+         $ kubectl get pods,svc,ingress -n default -o wide
+
+         NOTE: Wait 2-3 minutes for AWS ALB to provision
+               ADDRESS should show k8s-default-...elb.amazonaws.com
+
+
+[ ] SCREENSHOT #3 - Production Ingress & Pods
+         Capture terminal showing Pod "secure-api" in 1/1 Running state
+         All replicas running, and Ingress showing AWS ALB URL in ADDRESS field
+
+
+================================================================================
+  Phase 4: Observability, Metrics & Alert Pipeline
+================================================================================
+
+[ ] 4.0  Deploy Observability Stack & PrometheusRules
+         $ kubectl apply -k kubernetes/observability/
+         $ kubectl get pods -n monitoring
+
+
+[ ] 4.1  Send Test Traffic via Public ALB URL
+         $ ALB_URL=$(kubectl get ingress secure-api-ingress -n default \
+             -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+         $ curl -I http://$ALB_URL/healthz
+
+
+[ ] 4.2  Verify Prometheus Scrape Target (up == 1)
+         $ kubectl -n monitoring port-forward \
+             svc/$(kubectl get svc -n monitoring \
+               -l app=kube-prometheus-stack-prometheus \
+               -o jsonpath='{.items[0].metadata.name}') 9090:9090 &
+         $ curl -sG \
+             --data-urlencode 'query=up{service="secure-api-svc"}' \
+             http://localhost:9090/api/v1/query | jq .data.result
+
+
+[ ] 4.3  Verify Recording Rules via Prometheus
+         $ curl -sG \
+             --data-urlencode 'query=job:http_requests_total:rate5m' \
+             http://localhost:9090/api/v1/query | jq .data.result
+
+
+[ ] SCREENSHOT #4 - End-to-End Observability
+         Capture Prometheus Web UI or Terminal jq output showing:
+           query result: job:http_requests_total:rate5m
+           Target on cloud with status UP
+
+
+================================================================================
+  Phase 5: Clean Teardown & Cost Elimination (Destroy)
+================================================================================
+
+  [!!! WARNING - SRE BEST PRACTICE - READ BEFORE PROCEEDING !!!]
+      DO NOT run `terraform destroy` while Ingress, LoadBalancer Services,
+      or PVCs / EBS Volumes still exist in K8s. The AWS Load Balancer Controller
+      and EBS CSI driver create ALBs, Target Groups, Security Groups, and
+      EBS Volumes outside Terraform's control, causing VPC and Subnet deletion
+      to fail due to dependency locks.
+
+
+[ ] 5.1  Delete Workloads and Ingress (Allows Controller to Deprovision ALB)
+         $ kubectl delete -k kubernetes/apps/overlays/prod/
+
+
+[ ] 5.2  Release all EBS Volumes by Deleting PVCs Across All Namespaces
+         $ kubectl delete pvc --all -A
+         $ aws ec2 describe-volumes \
+             --filters "Name=tag:kubernetes.io/created-for/pvc/name,Values=*" \
+             --query "Volumes[*].{ID:VolumeId,State:State}" \
+             --output table
+
+
+[ ] 5.3  Wait for ALB to be Fully Deleted in AWS Console or CLI
+         $ aws elbv2 describe-load-balancers \
+             --query "LoadBalancers[?contains(LoadBalancerName, 'k8s')].LoadBalancerArn" \
+             --output text
+
+         NOTE: No ARN should remain before proceeding to next step
+
+
+[ ] 5.4  Kill Any Remaining Port-Forward Processes
+         $ pkill -f "port-forward"
+
+
+[ ] 5.5  Destroy All Infrastructure via Terraform
+         $ cd terraform
+         $ terraform destroy --auto-approve
+
+
+[ ] SCREENSHOT #5 - Complete Teardown
+         Capture final terminal line showing:
+           Destroy complete! Resources: XX destroyed.
+         Confirms no resources remain and cost is zero
+
+
+================================================================================
+  Evidence Summary Table
+================================================================================
+
+  IMG  Description                                     Verification Purpose
+  ---  ----------------------------------------------  ------------------------------------
+  01   Terminal: terraform apply complete              Verify IaC automation on AWS
+  02   Terminal: kubectl get nodes -o wide             Verify Bottlerocket OS on EKS
+  03   Terminal: kubectl get ingress,pods              Verify AWS ALB Ingress & Pods ready
+  04   Prometheus UI or API: PromQL rate5m             Verify Full-stack Observability
+  05   Terminal: terraform destroy complete            Verify Clean Teardown & Lifecycle
+
+
+================================================================================
+  END OF RUNBOOK
+================================================================================
