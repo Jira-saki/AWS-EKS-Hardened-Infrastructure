@@ -81,9 +81,6 @@ Risk and cost are reduced by validating all OS hardening patterns locally before
 
 > **Edge legend:** 🔵 Blue = request traffic path · 🟢 Green = GitOps/CI control flow · 🟠 Orange = ECR image pull (digest-pinned) · 🟣 Purple = Karpenter node provisioning · 🔴 Red = HPA autoscaling signal · 🟡 Amber = Prometheus scrape / security relations
 
-**Original architecture design sketch (hand-drawn reference):**
-
-![AWS Cloud Architecture Reference](assets/AWS_SCS2.png)
 
 ---
 
